@@ -1,4 +1,4 @@
-var width = window.innerWidth
+var viewportwidth = window.innerWidth
 || document.documentElement.clientWidth
 || document.body.clientWidth;
 
@@ -7,6 +7,7 @@ var height = (window.innerHeight
 || document.body.clientHeight)/2;
 
 var gridsize = 48
+var fontsizeaxis = 14
 
 var //width = 800,
 	//height = 400,
@@ -26,7 +27,7 @@ d3.csv("data/steps.csv").then(function (data) {
 
 	console.warn(gridsize*(data.length/7))
 	height = gridsize*7
-	width = myGroups.length > 1 ? (myGroups[myGroups.length-1] - myGroups[0])*gridsize : gridsize
+	var width = myGroups.length > 1 ? (myGroups[myGroups.length-1] - myGroups[0])*gridsize : gridsize
 
 	var svg = d3.select("#my_dataviz")
 		.append("div")
@@ -41,16 +42,42 @@ d3.csv("data/steps.csv").then(function (data) {
 		// Same, no margin-top
 		.attr("transform", `translate(${marginleft}, 0)`);
 
-	// Add the axis *after* adding the SVG, because the order matters in HTML
+	// Add title to graph
+	d3.select("#my_dataviz")
+		.append("text")
+		.attr("x", viewportwidth/2)
+		.attr("y", height + margintop + marginbottom)
+		.attr("class", "y-axis-title")
+		.style("max-width", 400)
+		.style("margin-left", marginleft)
+		.text("week");
+
+	// Use the gradient to set the shape fill, via CSS.
 	var axis = d3.select("#my_dataviz")
 		.append("svg")
 		.attr("class", "y-axis")
-		.attr("width", marginleft + 1)
-		// Add 2 so you have a little bit of room left for the black bar
-		// i.e. margin top has to be less than total height!
+		.attr('width', marginleft)
+		.attr('height', height + margintop + marginbottom)
 		.style("top", marginbottom + 1)
-		.attr("height", height + margintop + marginbottom)
-		.append("g")
+
+	var mainGradient = axis.append('defs')
+		.append('linearGradient')
+		.attr('id', 'mainGradient')
+	
+	mainGradient.append('stop')
+		.attr('class', 'stop-left')
+		.attr('offset', '0.9')
+
+	mainGradient.append('stop')
+		.attr('class', 'stop-right')
+		.attr('offset', '1')
+
+	axis.append("rect")
+		.classed('filled', true)
+		.attr('width', marginleft)
+		.attr('height', height + margintop + marginbottom)
+		
+	axis = axis.append("g")
 		.attr("transform", `translate(${marginleft}, 0)`)
 
 	var x_axis = d3.scaleBand()
@@ -59,7 +86,7 @@ d3.csv("data/steps.csv").then(function (data) {
 		.padding(0.05);
 
 	svg.append("g")
-		.style("font-size", 15)
+		.style("font-size", fontsizeaxis)
 		.attr("transform", `translate(0, ${height})`)
 		.call(d3.axisBottom(x_axis).tickSize(0).tickPadding([16]))
 		.attr("class", "x_axis")
@@ -83,7 +110,7 @@ d3.csv("data/steps.csv").then(function (data) {
 		.padding(0.05);
 
 	axis.call(d3.axisLeft(y_axis).tickSize(0).tickPadding([16]))
-		.style("font-size", 15)
+		.style("font-size", fontsizeaxis)
 		.select(".domain").remove()
 		.selectAll("text")
 		//.style("text-anchor", "end")
@@ -188,17 +215,3 @@ d3.csv("data/steps.csv").then(function (data) {
 		.on("click", tapsquare)
 
 })
-
-function wheel($div,deltaY){
-	var step = 30;
-	var pos = $div.scrollTop();
-	var nextPos = pos + (step*(-deltaY))
-	console.log("DelatY: " + deltaY + ", Step: " + step + ", nextPos: " + nextPos);
-	$div.scrollTop(nextPos);
-}
-
-$('.chart').on('scroll', function(event, delta, deltaX, deltaY) {
-	 wheel($(this),deltaY);
-	 event.preventDefault();
-	 console.log(`wheeling`)
-});

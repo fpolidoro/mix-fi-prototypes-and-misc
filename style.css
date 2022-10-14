@@ -1,3 +1,7 @@
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
 .rect {
 	opacity: 0.8;
 }
@@ -14,7 +18,28 @@
 
 .y-axis {
 	position: absolute;
-	background: white;
+	/*background: white;*/
+	/*background-image: linear-gradient(to right, white , rgba(255,255,255,0));*/
+	text-transform: uppercase;
+}
+
+.stop-left {
+	stop-color: white;
+}
+
+.stop-right {
+	stop-color: rgba(255,255,255,0);
+}
+
+.filled {
+	fill: url(#mainGradient);
+}
+
+.y-axis-title {
+	font-size: 12px;
+	text-align: center;
+	color: #666;
+	text-transform: uppercase;
 }
 
 .chart {
