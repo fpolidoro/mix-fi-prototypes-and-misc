@@ -6,8 +6,8 @@ var height = (window.innerHeight
 || document.documentElement.clientHeight
 || document.body.clientHeight)/2;
 
-var gridsize = 48
-var fontsizeaxis = 14
+var gridsize = 32
+var fontsizeaxis = 11
 
 var //width = 800,
 	//height = 400,
@@ -19,7 +19,6 @@ var //width = 800,
 var oldData
 
 d3.csv("data/steps.csv").then(function (data) {
-
 	data.sort((a, b) => moment(a.create_time).isBefore(moment(b.create_time)))
 	// Labels of row and columns -> unique identifier of the column called 'day_time' and 'source_type'
 	const myGroups = Array.from(new Set(data.map(d => moment(d.create_time).week()))).sort((a,b) => a > b)
@@ -48,7 +47,7 @@ d3.csv("data/steps.csv").then(function (data) {
 		.attr("x", viewportwidth/2)
 		.attr("y", height + margintop + marginbottom)
 		.attr("class", "y-axis-title")
-		.style("max-width", 400)
+		.style("max-width", viewportwidth)
 		.style("margin-left", marginleft)
 		.text("week");
 
@@ -79,6 +78,9 @@ d3.csv("data/steps.csv").then(function (data) {
 		
 	axis = axis.append("g")
 		.attr("transform", `translate(${marginleft}, 0)`)
+		.on("click", function (d) {
+			console.log(`X clicked`)
+		})
 
 	var x_axis = d3.scaleBand()
 		.range([0, width])
@@ -92,9 +94,10 @@ d3.csv("data/steps.csv").then(function (data) {
 		.attr("class", "x_axis")
 		.select(".domain").remove()
 		.selectAll("text")
-		.on("click", function (d) {
-			console.log(`X clicked`)
-		});
+		.on("wheel.zoom", function(event, d){
+			event.preventDefault()
+			console.log("wheeled")
+		})
 
 	// axis.call(d3.axisBottom(x_axis).tickSize(0).tickPadding([16]))
 	// 	.selectAll("text")
@@ -124,7 +127,7 @@ d3.csv("data/steps.csv").then(function (data) {
 		.domain([30000, 100])
 
 	// create a tooltip
-	const tooltip = d3.select("#my_dataviz")
+	const tooltip = d3.select("#tile-details")
 	.append("div")
 	.style("opacity", 0)
 	.attr("class", "tooltip")
@@ -144,7 +147,7 @@ d3.csv("data/steps.csv").then(function (data) {
 	}
 	const mousemove = function(event,d) {
 		tooltip
-			.html(`${moment(d.create_time).format('DD/MM')} steps: ${d.count}`)
+			.html(`${moment(d.create_time).format('Do MMMM')} steps: ${d.count}`)
 			.style("left", (event.x)/2 + "px")
 			.style("top", (event.y)/2 + "px")
 	}
@@ -164,16 +167,18 @@ d3.csv("data/steps.csv").then(function (data) {
 			d3.select(this)
 				.style("stroke", "none")
 				.style("opacity", 0.8)
+			console.log(`square deselected`)
 		}else{
 			if(oldData !== null){
 				tooltip
 					.style("opacity", 0)
 				d3.select(oldData)
 					.style("stroke", "none")
-					.style("opacity", 0.8)	
+					.style("opacity", 0.8)
+				console.log(`deselecting old`)
 			}
 			tooltip
-				.html(`${moment(d.create_time).format('DD/MM')} steps: ${d.count}`)
+				.html(`${moment(d.create_time).format('MMMM Do')}, steps: ${d.count}`)
 				.style("left", (event.x)/2 + "px")
 				.style("top", (event.y)/2 + "px")
 
@@ -182,36 +187,36 @@ d3.csv("data/steps.csv").then(function (data) {
 			d3.select(this)
 				.style("stroke", "#333")
 			.style("opacity", 1)
+			console.log(`selected square`)
 			oldData = this
 		}
 	}
 
 	svg.selectAll()
-		.data(data, function (d) {
-			return moment(d.create_time).week()+':'+moment(d.create_time).format('ddd');
-		})
-		.join("rect")
-		/*.enter()
-		.append("rect")*/
-		.attr("x", function (d) {
-			return x_axis(moment(d.create_time).week())
-		})
-		.attr("y", function (d) {
-			return y_axis(moment(d.create_time).format('ddd'))
-		})
-		.attr("rx", 4)
-		.attr("ry", 4)
-		.attr("width", x_axis.bandwidth())
-		.attr("height", y_axis.bandwidth())
-		.style("fill", function (d) {
-			return myColor(d.count)
-		})
-		.style("stroke-width", 4)
-		.style("stroke", "none")
-		.style("opacity", 0.8)
-		.on("mouseover", mouseover)
-		.on("mousemove", mousemove)
-		.on("mouseleave", mouseleave)
-		.on("click", tapsquare)
-
+	.data(data, function (d) {
+		return moment(d.create_time).week()+':'+moment(d.create_time).format('ddd');
+	})
+	.join("rect")
+	/*.enter()
+	.append("rect")*/
+	.attr("x", function (d) {
+		return x_axis(moment(d.create_time).week())
+	})
+	.attr("y", function (d) {
+		return y_axis(moment(d.create_time).format('ddd'))
+	})
+	.attr("rx", 4)
+	.attr("ry", 4)
+	.attr("width", x_axis.bandwidth())
+	.attr("height", y_axis.bandwidth())
+	.style("fill", function (d) {
+		return myColor(d.count)
+	})
+	.style("stroke-width", 4)
+	.style("stroke", "none")
+	.style("opacity", 0.8)
+	.on("mouseover", mouseover)
+	.on("mousemove", mousemove)
+	.on("mouseleave", mouseleave)
+	.on("click", tapsquare)
 })

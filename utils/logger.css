@@ -1,0 +1,13 @@
+#log {
+	max-height: 40vh;
+	overflow-y: scroll;
+}
+
+.warn {
+	background-color: #fff9c4;
+	color: #c17900;
+}
+
+.timestamp {
+	color: #aaa
+}
