@@ -6,7 +6,7 @@ window.console = {
 		span.appendChild(document.createTextNode(`${moment().format('HH:mm:ss.SSS')}: `))
 		node.appendChild(span)
 		node.appendChild(document.createTextNode(str))
-		document.getElementById("log").appendChild(node);
+		document.getElementById("log").prepend(node);
 	},
 	warn: function(str){
 		var node = document.createElement("div")
@@ -16,6 +16,6 @@ window.console = {
 		span.appendChild(document.createTextNode(`${moment().format('HH:mm:ss.SSS')}: `))
 		node.appendChild(span)
 		node.appendChild(document.createTextNode(str))
-		document.getElementById("log").appendChild(node)
+		document.getElementById("log").prepend(node)
 	}
 }

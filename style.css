@@ -60,3 +60,8 @@ body {
 .y-axis .tick > text {
 	transform: translateX(-16px) translateY(-28px) rotateZ(270deg);
 }
+
+#target {
+	background: white;
+	border: 1px solid black;
+}
