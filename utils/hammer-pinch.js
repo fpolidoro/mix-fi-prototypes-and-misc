@@ -15,6 +15,8 @@ var prevZoom = 0
 var prevZoomSetter = 0
 var oldPinch = 'NONE'
 var currentPinch = 'NONE'
+const maxZoom = 25
+const minZoom = 0.25
 
 function pinchType(type) {
     var result
@@ -37,9 +39,10 @@ function computeZoom(level){
        prevZoom = level
        prevZoomSetter = level
     }else if(prevZoomSetter < level || prevZoomSetter > level+1){
-       if(level >= 1) prevZoom += level
-       else prevZoom -= level
-       prevZoomSetter = level
+        if(level >= 1 && prevZoom < maxZoom) prevZoom += level
+        else if(level < 1 && prevZoom > minZoom) prevZoom -= level
+        if(prevZoom !== maxZoom && prevZoom !== minZoom)
+            prevZoomSetter = level
     }
 }
 
@@ -95,6 +98,8 @@ function onPinch(ev) {
     } else if (ev.type == 'pinchend') {
         console.log('PINCHEND');
         myElement.style.background = "white"
+        oldPinch = currentPinch
+        currentPinch = 'NONE'
     } 
 }
 
