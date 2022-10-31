@@ -124,12 +124,31 @@ Promise.all(
         .domain(dateTimeExtent)
         .range([0, viewportwidth - margin.right - margin.left])
 
+        var oldK = 0
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x))
-            .on("dblclick", function(e) {
+            /*.on("dblclick", function(e) {
                 update('m')
-            });
+            });*/
+            .call(d3.zoom().on("zoom", function (e) {
+                //svg.attr("transform", d3.event.transform)
+                if(Math.abs(oldK - e.transform.k) > 0.8){
+                    if(e.transform.k >= 1){
+                        console.log(`Zoom in ${e.transform.k}`)
+                    }else{
+                        console.log(`Zoom out ${e.transform.k}`)
+                    }
+                    if(e.transform.k < 1){
+                        update('d')
+                    }else if(e.transform.k >= 1 && e.transform.k < 2){
+                        update('w')
+                    }else if(e.transform.k >= 2){
+                        update('m')
+                    }
+                    oldK = e.transform.k
+                }
+            }))
 
         // Y axis: initialization
         var y = d3.scaleLinear()
