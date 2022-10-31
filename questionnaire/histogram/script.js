@@ -69,7 +69,7 @@ Promise.all(
     // append the svg object to the body of the page
     const svg = d3.select("#my_dataviz")
     .append("svg")
-    .attr("width", viewportwidth + margin.left + margin.right)
+    .attr("width", viewportwidth - margin.left - margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform",
@@ -77,12 +77,6 @@ Promise.all(
 
     // get the data
     d3.csv("../../data/steps_10.csv").then( function(data) {
-        var maxSteps = 0
-        data.map(d => +d.count).forEach(d => {
-            if(+d > maxSteps) maxSteps = d
-        })
-        console.log(maxSteps)
-
         data = data.filter((d, index) => data.findIndex(dd => dd.day_time === d.day_time) === index)
         data.forEach(d => d.day_time = new Date(+d.day_time))
         data.sort((a, b) => a.day_time.isBefore(b.day_time))
@@ -122,53 +116,6 @@ Promise.all(
         var dateTimeExtent = d3.extent(data, d => d.day_time)
         // used to bin data by a time interval consistently, here data is being binned in a 2 hour interval
         var thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
-        
-        const zoom = function(event) {
-            console.log(`Zoomed`)
-            thresholds = d3.timeMonth.every(1).range(...dateTimeExtent)
-
-            var sum = []
-            thresholds.forEach((t, i) => {
-                var count = 0
-                var filtered
-                if(i < thresholds.length-1){
-                    if(i === 0){
-                        filtered = data.filter(d => 
-                        d.day_time.valueOf() < t.valueOf())
-                        filtered.forEach(d => {
-                            return count += +d.count
-                        })
-                        sum.push(Object.assign({}, { day_time: d3.timeMonth.offset(t, -1), count: count }))
-                        count = 0
-                        filtered = undefined
-                    }
-                    filtered = data.filter(d => 
-                        d.day_time.valueOf() >= t.valueOf() && d.day_time.valueOf() < thresholds[i+1].valueOf())
-                }else{
-                    filtered = data.filter(d => 
-                        d.day_time.valueOf() >= t.valueOf())
-                }
-                filtered.forEach(d => {
-                    return count += +d.count
-                })
-                sum.push(Object.assign({}, { day_time: t, count: count }))
-            })
-            console.log(sum)
-
-            y.domain([0, d3.max(sum, d => +d.count)])
-            var bars = svg.selectAll("bar")
-            .data(sum)
-
-            bars.enter()
-            .append("rect")
-                .attr("x", function(d) { return x(d.day_time); })
-                .attr("y", function(d) { return y(+d.count); })
-                .attr("width", function(d) { return (viewportwidth - margin.right - margin.left)/thresholds.length})
-                .attr("height", function(d) { return height - y(+d.count); })
-                .attr("fill", "#69b3a2")
-            
-            bars.exit().remove()
-        }
 
         // X axis: scale and draw:
         const x = d3.scaleTime()
@@ -178,31 +125,80 @@ Promise.all(
         .range([0, viewportwidth - margin.right - margin.left])
 
         svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x))
-        .attr("class", "x-axis")
-        .selectAll("text")
-        .attr("transform", "translate(-10,0)rotate(-45)")
-        .style("text-anchor", "end")
-        .on("dblclick", zoom);
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x))
+            .on("dblclick", function(e) {
+                update('m')
+            });
 
-        // Add Y axis
+        // Y axis: initialization
         var y = d3.scaleLinear()
-        .domain([0, d3.max(data, d => +d.count)])
-        .range([ height, 0]);
-        svg.append("g")
-        .call(d3.axisLeft(y));
+            .range([height, 0]);
+        var yAxis = svg.append("g")
 
-        // Bars
-        svg.selectAll("bar")
-        .data(data)
-        .enter()
-        .append("rect")
-            .attr("x", function(d) { return x(d.day_time); })
-            .attr("y", function(d) { return y(+d.count); })
-            .attr("width", function(d) { return viewportwidth/thresholds.length})
-            .attr("height", function(d) { return height - y(+d.count); })
-            .attr("fill", "#69b3a2")
+        // A function that builds the graph for a specific value of bin
+        function update(span) {
+            switch(span){
+                case 'm':
+                    thresholds = d3.timeMonth.every(1).range(...dateTimeExtent)
+                    break
+                case 'w':
+                    thresholds = d3.timeWeek.every(1).range(...dateTimeExtent)
+                    break
+                case 'd':
+                default:
+                    thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
+            }
 
-        })
+            // set the parameters for the histogram
+            var histogram = d3.histogram()
+                .value(function(d) { return d.day_time; })  // I need to give the vector of value
+                .domain(x.domain())  // then the domain of the graphic
+                .thresholds(/*x.ticks(nBin)*/thresholds); // then the numbers of bins
+
+            // And apply this function to data to get the bins
+            var bins = histogram(data);
+
+            // Y axis: update now that we know the domain
+            y.domain([0, d3.max(bins, function(d) {
+                return d.map(dd => +dd.count).reduce((p,c) => p+c)
+            })]);   // d3.hist has to be called before the Y axis obviously
+            yAxis
+                .transition()
+                .duration(1000)
+                .call(d3.axisLeft(y));
+
+            // Join the rect with the bins data
+            var u = svg.selectAll("rect")
+                .data(bins)
+
+            // Manage the existing bars and eventually the new ones:
+            u
+                .enter()
+                .append("rect") // Add a new rect for each new elements
+                .merge(u) // get the already existing elements as well
+                .transition() // and apply changes to all of them
+                .duration(1000)
+                .attr("x", 1)
+                .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.map(dd => +dd.count).reduce((p,c) => p+c)) + ")"; })
+                .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
+                .attr("height", function(d) { return height - y(d.map(dd => +dd.count).reduce((p,c) => p+c)); })
+                .style("fill", "#69b3a2")
+
+
+            // If less bar in the new histogram, I delete the ones not in use anymore
+            u
+                .exit()
+                .remove()
+            }
+
+
+        // Initialize with 20 bins
+        update(20)
+
+        // Listen to the button -> update if user change it
+        d3.select("#nBin").on("input", function() {
+            update(+this.value);
+        });
+    })
 })
