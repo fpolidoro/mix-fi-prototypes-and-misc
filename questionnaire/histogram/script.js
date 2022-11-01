@@ -1,6 +1,8 @@
 var modules = [
-`https://cdnjs.cloudflare.com/ajax/libs/d3/7.6.1/d3.min.js`,
-`https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js`
+//`https://cdnjs.cloudflare.com/ajax/libs/d3/7.6.1/d3.min.js`,
+//`https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js`
+`../../libs/d3.v6.js`,
+`../../libs/jquery-3.6.0-min.js`
 ]
 
 Date.prototype.getWeek = function () {
@@ -125,12 +127,9 @@ Promise.all(
         .range([0, viewportwidth - margin.right - margin.left])
 
         var oldK = 0
-        svg.append("g")
+        var xAxis = svg.append("g")
             .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x))
-            /*.on("dblclick", function(e) {
-                update('m')
-            });*/
+            .attr("class", "x-axis")
             .call(d3.zoom().on("zoom", function (e) {
                 //svg.attr("transform", d3.event.transform)
                 if(Math.abs(oldK - e.transform.k) > 0.8){
@@ -153,7 +152,9 @@ Promise.all(
         // Y axis: initialization
         var y = d3.scaleLinear()
             .range([height, 0]);
-        var yAxis = svg.append("g")
+        var yAxis = svg.append("g").attr("class", "y-axis")
+
+        const stepCount = (d) => d.map(dd => +dd.count < 0 ? 0 : +dd.count).reduce((p,c) => p+c)
 
         // A function that builds the graph for a specific value of bin
         function update(span) {
@@ -178,9 +179,11 @@ Promise.all(
             // And apply this function to data to get the bins
             var bins = histogram(data);
 
+            xAxis.call(d3.axisBottom(x).tickValues(thresholds))
+
             // Y axis: update now that we know the domain
             y.domain([0, d3.max(bins, function(d) {
-                return d.map(dd => +dd.count).reduce((p,c) => p+c)
+                return stepCount(d)
             })]);   // d3.hist has to be called before the Y axis obviously
             yAxis
                 .transition()
@@ -199,9 +202,9 @@ Promise.all(
                 .transition() // and apply changes to all of them
                 .duration(1000)
                 .attr("x", 1)
-                .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.map(dd => +dd.count).reduce((p,c) => p+c)) + ")"; })
+                .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(stepCount(d)) + ")"; })
                 .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
-                .attr("height", function(d) { return height - y(d.map(dd => +dd.count).reduce((p,c) => p+c)); })
+                .attr("height", function(d) { return height - y(stepCount(d)); })
                 .style("fill", "#69b3a2")
 
 
