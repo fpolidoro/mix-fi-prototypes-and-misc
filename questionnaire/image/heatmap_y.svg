@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg class="y-axis" width="40" height="256" style="top: 9px;">
+    <defs>
+        <linearGradient id="mainGradient">
+            <stop class="stop-left" offset="0.9"></stop>
+            <stop class="stop-right" offset="1"></stop>
+        </linearGradient>
+    </defs>
+    <rect class="filled" width="40" height="256"></rect>
+    <g transform="translate(40, 0)" fill="none" font-size="10" font-family="sans-serif" text-anchor="end" style="font-size: 11px;">
+        <g class="tick" opacity="1" transform="translate(0,207.31914893617022)">
+            <line stroke="currentColor" x2="0"></line>
+            <text fill="currentColor" x="-16" dy="0.32em">Sun</text>
+        </g>
+        <g class="tick" opacity="1" transform="translate(0,175.54609929078015)">
+            <line stroke="currentColor" x2="0"></line>
+            <text fill="currentColor" x="-16" dy="0.32em">Sat</text>
+        </g>
+        <g class="tick" opacity="1" transform="translate(0,143.77304964539007)">
+            <line stroke="currentColor" x2="0"></line>
+            <text fill="currentColor" x="-16" dy="0.32em">Fri</text>
+        </g>
+        <g class="tick" opacity="1" transform="translate(0,111.99999999999999)">
+            <line stroke="currentColor" x2="0"></line>
+            <text fill="currentColor" x="-16" dy="0.32em">Thu</text>
+        </g>
+        <g class="tick" opacity="1" transform="translate(0,80.22695035460991)">
+            <line stroke="currentColor" x2="0"></line>
+            <text fill="currentColor" x="-16" dy="0.32em">Wed</text>
+        </g>
+        <g class="tick" opacity="1" transform="translate(0,48.45390070921985)">
+            <line stroke="currentColor" x2="0"></line>
+            <text fill="currentColor" x="-16" dy="0.32em">Tue</text>
+        </g>
+        <g class="tick" opacity="1" transform="translate(0,16.680851063829778)">
+            <line stroke="currentColor" x2="0"></line>
+            <text fill="currentColor" x="-16" dy="0.32em">Mon</text>
+        </g>
+    </g>
+</svg>
