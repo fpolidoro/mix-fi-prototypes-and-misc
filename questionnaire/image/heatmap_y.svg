@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg class="y-axis" width="40" height="256" style="top: 9px;" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg">
-    <defs>
+    <!-- <defs>
         <linearGradient id="mainGradient">
             <stop class="stop-left" offset="0.9"></stop>
             <stop class="stop-right" offset="1"></stop>
         </linearGradient>
     </defs>
-    <rect class="filled" width="40" height="256"></rect>
+    <rect class="filled" width="40" height="256"></rect> -->
     <g transform="translate(40, 0)" fill="none" font-size="10" font-family="sans-serif" text-anchor="end" style="font-size: 11px;">
         <g class="tick" opacity="1" transform="translate(0,207.31914893617022)">
             <line stroke="currentColor" x2="0"></line>

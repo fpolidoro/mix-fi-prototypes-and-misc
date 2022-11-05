@@ -3,7 +3,8 @@ var modules = [
 //`https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js`,
 //`https://cdnjs.cloudflare.com/ajax/libs/zingtouch/1.0.6/zingtouch.min.js`
 `../../libs/zingtouch.js`,
-`../../libs/d3.v6.js`
+`../../libs/d3.v6.js`,
+`../../libs/jquery-3.6.0-min.js`
 ]
 
 Promise.all(
@@ -28,6 +29,12 @@ Promise.all(
             if(e.transform.k > 1){
                 console.log(`Zoom in ${e.transform.k}`)
                 chart.src = "heatmap_reconf_x.svg"
+                var left = $('#left')
+                left.removeClass('slide-left')
+                left.hide()
+                var right = $('#right')
+                right.removeClass('slide-right')
+                right.hide()
             }else{
                 console.log(`Zoom out ${e.transform.k}`)
                 chart.src = "heatmap.svg"
