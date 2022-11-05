@@ -1,0 +1,75 @@
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+.rect {
+	opacity: 0.8;
+}
+
+#my_dataviz {
+	width: calc(100vw - 16px);
+	border: solid 1px #ddd;
+}
+
+/* To make sure there is no space between the DIV and the SVG */
+#my_dataviz > * {
+	display: block;
+}
+
+.y-axis {
+	position: absolute;
+	/*background: white;*/
+	/*background-image: linear-gradient(to right, white , rgba(255,255,255,0));*/
+	text-transform: uppercase;
+}
+
+.stop-left {
+	stop-color: white;
+}
+
+.stop-right {
+	stop-color: rgba(255,255,255,0);
+}
+
+.filled {
+	fill: url(#mainGradient);
+}
+
+.y-axis-title {
+	font-size: 12px;
+	text-align: center;
+	color: #666;
+	text-transform: uppercase;
+}
+
+.chart {
+	overflow-x: scroll;
+	max-width: calc(100vw - 16px);
+}
+
+.tick {
+	-webkit-touch-callout: none; /* iOS Safari */
+	-webkit-user-select: none; /* Safari */
+	-khtml-user-select: none; /* Konqueror HTML */
+	-moz-user-select: none; /* Old versions of Firefox */
+	-ms-user-select: none; /* Internet Explorer/Edge */
+	user-select: none; /* Non-prefixed version, currently
+	supported by Chrome, Edge, Opera and Firefox */
+}
+
+.y-axis .tick > text {
+	transform: translateX(-16px) translateY(-28px) rotateZ(270deg);
+}
+
+#area {
+    position: relative;
+	overflow-x: hidden;
+}
+
+#target {
+	border: 1px solid black;
+    position: absolute;
+    width: 100%;
+    height: 34px;
+	bottom: 0;
+}

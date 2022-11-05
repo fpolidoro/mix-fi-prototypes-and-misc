@@ -273,7 +273,7 @@ Promise.all(
             var date = new Date(+d.day_time)
 
             tooltip
-                .html(`${date.getWeekDay()}s, ${date.getMonthName()} ${date.getFullYear()}, total steps: ${cnt < 0 ? 'No data' : cnt}`)
+                .html(`${d.d}s, ${d.m} ${d.t.getFullYear()}, total steps: ${d.c < 0 ? 'No data' : d.c}`)
                 .style("left", (event.x)/2 + "px")
                 .style("top", (event.y)/2 + "px")
         }
@@ -304,11 +304,8 @@ Promise.all(
                     console.log(`deselecting old`)
                 }
 
-                var cnt = stepCount(d)
-                var date = new Date(+d.day_time)
-
                 tooltip
-                .html(`${date.getWeekDay()}s, ${date.getMonthName()} ${date.getFullYear()}, total steps: ${cnt < 0 ? 'No data' : cnt}`)
+                .html(`${d.d}s, ${d.m} ${d.t.getFullYear()}, total steps: ${d.c < 0 ? 'No data' : d.c}`)
                     .style("left", (event.x)/2 + "px")
                     .style("top", (event.y)/2 + "px")
 
@@ -322,26 +319,30 @@ Promise.all(
             }
         }
 
+        var dada = dataArray.map((d,i) => {
+            return {m: d.getMonthName('mmm'), d: d.getWeekDay('ddd'), t: d, c: stepCount(data[i])}
+        }).filter((u,i,self) => self.findIndex(v => v.m === u.m && v.d === u.d) === i)
+        console.log(dada.length)
+
         svg.selectAll()
-        .data(data, function (d) {
-            let date = new Date(+d.day_time)
-            return date.getMonthName('mmm')+':'+date.getWeekDay('ddd');
+        .data(dada, function(d){
+            //console.warn(d)
         })
         .join("rect")
         .attr("x", function (d) {
-            return x_axis(new Date(+d.day_time).getMonthName('mmm'))
+            return x_axis(d.t.getMonthName('mmm'))
         })
         .attr("y", function (d) {
-            return y_axis(new Date(+d.day_time).getWeekDay('ddd'))
+            return y_axis(d.t.getWeekDay('ddd'))
         })
         .attr("rx", 4)
         .attr("ry", 4)
         .attr("width", x_axis.bandwidth())
         .attr("height", y_axis.bandwidth())
         .style("fill", function (d) {
-            var cnt = stepCount(d)//new Date(+d.day_time).getMonth()+':'+new Date(+d.day_time).getWeekDay('ddd');
+            //var cnt = stepCount(d)//new Date(+d.day_time).getMonth()+':'+new Date(+d.day_time).getWeekDay('ddd');
 
-            return cnt === 0 ? '#efebe9' : myColor(cnt)
+            return d.c === 0 ? '#efebe9' : myColor(d.c)
         })
         .style("stroke-width", 4)
         .style("stroke", "none")
