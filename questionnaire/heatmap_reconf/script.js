@@ -319,6 +319,67 @@ Promise.all(
             }
         }
 
+        const squaresize = gridsize/1.5
+        const legend = d3.select('#legend')
+        .append("svg")
+        .attr("width", (squaresize*8) + marginleft + marginright)
+        // No margin-top required here, because the other element already took care of it
+        .attr("height", 64)
+        .attr('transform', `translate(0, 8)`)
+
+        const categoriesCount = 7;
+
+        const categories = [...Array(categoriesCount)].map((_, i) => {
+            const upperBound = 700000 / categoriesCount * (categoriesCount - i);
+            const lowerBound = 700000 / categoriesCount * (categoriesCount - i - 1);
+
+            return {
+                upperBound,
+                lowerBound,
+                color: d3.interpolateInferno(upperBound / 700000)
+            };
+        });
+
+        categories.unshift({
+            upperBound: -1,
+            lowerBound: -1,
+            color: '#efebe9'
+        })
+
+        legend
+        .selectAll('rect')
+        .data(categories)
+        .enter()
+        .append('rect')
+        .attr('fill', d => d.color)
+        .attr('x', (d, i) => (squaresize+2) * i + (i===0 ? 16 : 24))
+        .attr('y', 20)
+        .attr("rx", 4)
+        .attr("ry", 4)
+        .style("stroke-width", 4)
+        .style("stroke", "none")
+        .style("opacity", 0.8)
+        .attr('width', squaresize)
+        .attr('height', squaresize)
+
+        legend
+          .selectAll("text")
+          .data(categories)
+          .join("text")
+          .attr("x", (d, i) => (squaresize+2) * i + (i === 0 ? 16 : squaresize+4))
+          .attr("y", 32)
+          .attr("dy", squaresize)
+          .attr("text-anchor", "start")
+          .attr("font-size", 11)
+          .text(d => d.upperBound < 0 ? `N/D` : `${((700000 - d.lowerBound)/10000).toFixed(0)}k`);
+
+        legend
+          .append("text")
+          .attr("x", 16)
+          .attr("y", 12)
+          .attr("font-size", 14)
+          .text("Steps");
+
         var dada = dataArray.map((d,i) => {
             return {m: d.getMonthName('mmm'), d: d.getWeekDay('ddd'), t: d, c: stepCount(data[i])}
         }).filter((u,i,self) => self.findIndex(v => v.m === u.m && v.d === u.d) === i)
