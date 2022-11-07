@@ -23,10 +23,29 @@ Promise.all(
 
     var chart = document.getElementById("chart")
     var oldK = 0
+    var oldZ
+    let touchCount = 0
+
+    document.querySelector('#target').addEventListener('touchstart', (e) => {
+        touchCount = e.touches.length;
+    });
+
     d3.select("#target").call(d3.zoom().on("zoom", function (e){
+        console.log(e.transform)
+        console.log(touchCount)
+        // When 1 finger, do not zoom
+        if (touchCount === 1) {
+            console.warn(`zooming with one finger`)
+            e.sourceEvent.stopPropagation();
+            return;
+        }
+
         //if(Math.abs(oldK - e.transform.k) > 0.8){
             console.log(e.transform)
-            if(e.transform.k > 1){
+            if(e.transform.k >= 1){
+                console.log(`Zoom out ${e.transform.k}`)
+                chart.src = "heatmap.svg"
+            }else{
                 console.log(`Zoom in ${e.transform.k}`)
                 chart.src = "heatmap_reconf_x.svg"
                 var left = $('#left')
@@ -35,9 +54,6 @@ Promise.all(
                 var right = $('#right')
                 right.removeClass('slide-right')
                 right.hide()
-            }else{
-                console.log(`Zoom out ${e.transform.k}`)
-                chart.src = "heatmap.svg"
             }
             oldK = e.transform.k
         //}
