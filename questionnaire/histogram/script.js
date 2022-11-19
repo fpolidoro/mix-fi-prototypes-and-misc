@@ -185,6 +185,7 @@ Promise.all(
             y.domain([0, d3.max(bins, function(d) {
                 return stepCount(d)
             })]);   // d3.hist has to be called before the Y axis obviously
+
             yAxis
                 .transition()
                 .duration(1000)
@@ -205,14 +206,36 @@ Promise.all(
                 .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(stepCount(d)) + ")"; })
                 .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
                 .attr("height", function(d) { return height - y(stepCount(d)); })
-                .style("fill", "#69b3a2")
+                .style("fill", function(d){
+                    /*let steps = stepCount(d)
+                    if(steps < 6000){*/
+                        return "#fac228"
+                    /*}else{
+                        return "#d44842"
+                    }*/
+                })
 
 
             // If less bar in the new histogram, I delete the ones not in use anymore
-            u
-                .exit()
-                .remove()
+            u.exit().remove()
+
+            svg.selectAll("line").remove()  //remove the old threshold line
+            if(span !== 'm' && span !== 'w'){
+                svg.append("line")  //add it again
+                    .attr("x1", x(dateTimeExtent[0]))
+                    .attr("x2", x(dateTimeExtent[1]))
+                    .attr("y1", y(6000))
+                    .attr("y2", y(6000))
+                    .attr("class", "goal")
+                    .attr("stroke", "black")
+                    .attr("stroke-dasharray", "4")
+                /*svg.append("text")
+                    .attr("x", x(190))
+                    .attr("y", y(1400))
+                    .text("threshold: 140")
+                    .style("font-size", "15px")*/
             }
+        }
 
 
         // Initialize with 20 bins
