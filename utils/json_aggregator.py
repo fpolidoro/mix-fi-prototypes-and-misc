@@ -32,6 +32,7 @@ with open(f'{ROOT_PATH}/com.samsung.shealth.tracker.pedometer_day_summary.202210
                 day = read.index(DAY)
                 print(f'bin {bin}, cnt {cnt}, cal {cal}, dis {dis}, spe {spe}, rec {rec}, day {day}')
                 write = [DAY, CNT, DIS, CAL, SPE, REC]
+                writer.writerow(write)
 
             if i > 1:
                 binning_json = read[1]

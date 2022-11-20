@@ -73,12 +73,25 @@ Promise.all(
     .append("svg")
     .attr("width", viewportwidth - margin.left - margin.right)
     .attr("height", height + margin.top + margin.bottom)
+    .style("position", "absolute")
+    .style("pointer-events", "none")
+    .style("z-index", 1)
     .append("g")
-    .attr("transform",
-        `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+  
+    const body = d3.select("#my_dataviz").append("div")
+        //.attr("transform", `translate(${margin.left},${margin.top})`)
+        .style("overflow-x", "scroll")
+        .style("margin-left", `${margin.left}px`)
+        .style("margin-top", `${margin.top}px`)
+        .style("-webkit-overflow-scrolling", "touch");
+    
+    const data_svg = body.append("svg")
+        .attr("height", height + margin.top + margin.bottom)
+        .style("display", "block")
 
     // get the data
-    d3.csv("../../data/steps_10.csv").then( function(data) {
+    d3.csv("../../data/exploded.csv").then( function(data) {
         data = data.filter((d, index) => data.findIndex(dd => dd.day_time === d.day_time) === index)
         data.forEach(d => d.day_time = new Date(+d.day_time))
         data.sort((a, b) => a.day_time.isBefore(b.day_time))
@@ -100,10 +113,10 @@ Promise.all(
                 var row = i === 0 ? Object.assign({}, data[d.start]) : Object.assign({}, rows[i-1])              
                 row.count = -1
                 if(d.diff < 0){
-                    row.day_time = row.day_time.valueOf() - 24*3600*1000
+                    row.day_time = row.day_time.valueOf() - /*24**/3600*1000
                     rows.unshift(row)
                 }else{
-                    row.day_time = row.day_time.valueOf() + 24*3600*1000
+                    row.day_time = row.day_time.valueOf() + /*24**/3600*1000
                     rows.push(row)
                 } 
                 
@@ -124,29 +137,37 @@ Promise.all(
         //.domain([0, 1000])     // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
         //.range([0, width]);
         .domain(dateTimeExtent)
-        .range([0, viewportwidth - margin.right - margin.left])
+        //.range([0, thresholds.length*10/*viewportwidth*/ - margin.right - margin.left])
 
         var oldK = 0
-        var xAxis = svg.append("g")
+        var oldSpan = 'd'
+        var xAxis = data_svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .attr("class", "x-axis")
             .call(d3.zoom().on("zoom", function (e) {
                 //svg.attr("transform", d3.event.transform)
-                if(Math.abs(oldK - e.transform.k) > 0.8){
+                //if(Math.abs(oldK - e.transform.k) > 0.8){
                     if(e.transform.k >= 1){
                         console.log(`Zoom in ${e.transform.k}`)
                     }else{
                         console.log(`Zoom out ${e.transform.k}`)
                     }
-                    if(e.transform.k < 1){
-                        update('d')
+
+                    if(e.transform.k < 0.5){
+                        span = 'h'
+                    }else if(e.transform.k >= 0.5 && e.transform.k < 1){
+                        span = 'd'
                     }else if(e.transform.k >= 1 && e.transform.k < 2){
-                        update('w')
+                        span = 'w'
                     }else if(e.transform.k >= 2){
-                        update('m')
+                        span = 'm'
+                    }
+                    if(oldSpan !== span){
+                        update(span)
+                        oldSpan = span
                     }
                     oldK = e.transform.k
-                }
+                //}
             }))
 
         // Y axis: initialization
@@ -158,17 +179,34 @@ Promise.all(
 
         // A function that builds the graph for a specific value of bin
         function update(span) {
+            let ticks
             switch(span){
                 case 'm':
                     thresholds = d3.timeMonth.every(1).range(...dateTimeExtent)
+                    ticks = thresholds
                     break
                 case 'w':
                     thresholds = d3.timeWeek.every(1).range(...dateTimeExtent)
+                    ticks = thresholds
+                    break
+                case 'h':
+                    thresholds = d3.timeHour.every(1).range(...dateTimeExtent)
+                    ticks = d3.timeHour.every(6).range(...dateTimeExtent)
                     break
                 case 'd':
                 default:
                     thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
+                    ticks = d3.timeMonday.every(1).range(...dateTimeExtent)
             }
+            var width
+            if(thresholds.length*8 < viewportwidth){
+                width = viewportwidth /*- margin.right*/ - margin.left
+            }else{ 
+                width = thresholds.length*8 - margin.right - margin.left
+            }
+
+            data_svg.attr("width", width)
+            x.range([0, width])
 
             // set the parameters for the histogram
             var histogram = d3.histogram()
@@ -179,12 +217,13 @@ Promise.all(
             // And apply this function to data to get the bins
             var bins = histogram(data);
 
-            xAxis.call(d3.axisBottom(x).tickValues(thresholds))
+            xAxis.call(d3.axisBottom(x).tickValues(/*thresholds*/ticks))
 
-            // Y axis: update now that we know the domain
-            y.domain([0, d3.max(bins, function(d) {
+            let max = d3.max(bins, function(d) {
                 return stepCount(d)
-            })]);   // d3.hist has to be called before the Y axis obviously
+            })
+            // Y axis: update now that we know the domain
+            y.domain([0, max]);   // d3.hist has to be called before the Y axis obviously
 
             yAxis
                 .transition()
@@ -192,8 +231,10 @@ Promise.all(
                 .call(d3.axisLeft(y));
 
             // Join the rect with the bins data
-            var u = svg.selectAll("rect")
+            var u = data_svg.selectAll("rect")
                 .data(bins)
+            
+            console.log(`span: ${span}, thresholds: ${thresholds.length}, bins: ${bins.length}, max: ${max}`)
 
             // Manage the existing bars and eventually the new ones:
             u
@@ -204,7 +245,9 @@ Promise.all(
                 .duration(1000)
                 .attr("x", 1)
                 .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(stepCount(d)) + ")"; })
-                .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
+                .attr("width", function(d) {
+                    return Math.abs(x(d.x1) - x(d.x0)-1)
+                })
                 .attr("height", function(d) { return height - y(stepCount(d)); })
                 .style("fill", function(d){
                     /*let steps = stepCount(d)
@@ -219,9 +262,10 @@ Promise.all(
             // If less bar in the new histogram, I delete the ones not in use anymore
             u.exit().remove()
 
-            svg.selectAll("line").remove()  //remove the old threshold line
-            if(span !== 'm' && span !== 'w'){
-                svg.append("line")  //add it again
+            data_svg.selectAll("line").remove()  //remove the old threshold line
+            data_svg.select("#goal-label").remove()
+            if(span !== 'm' && span !== 'w' && span !== 'h'){
+                data_svg.append("line")  //add it again
                     .attr("x1", x(dateTimeExtent[0]))
                     .attr("x2", x(dateTimeExtent[1]))
                     .attr("y1", y(6000))
@@ -229,17 +273,18 @@ Promise.all(
                     .attr("class", "goal")
                     .attr("stroke", "black")
                     .attr("stroke-dasharray", "4")
-                /*svg.append("text")
-                    .attr("x", x(190))
-                    .attr("y", y(1400))
-                    .text("threshold: 140")
-                    .style("font-size", "15px")*/
+                data_svg.append("text")
+                    .attr("id", "goal-label")
+                    .attr("x", x(dateTimeExtent[0])+4)
+                    .attr("y", y(6000)-4)
+                    .text("daily goal")
+                    .style("font-size", "15px")
             }
         }
 
 
         // Initialize with 20 bins
-        update(20)
+        update(oldSpan)
 
         // Listen to the button -> update if user change it
         d3.select("#nBin").on("input", function() {
