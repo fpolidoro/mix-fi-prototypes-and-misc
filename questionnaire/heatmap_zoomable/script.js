@@ -64,7 +64,8 @@ Promise.all(
     d3.csv("../../data/steps_10.csv").then(function (data) {
         console.log(`creation_time: ${data[0].day_time}: ${new Date(+data[0].day_time)}`)
         data = data.filter((d, index) => data.findIndex(dd => dd.day_time === d.day_time) === index)
-        data.sort((a, b) => new Date(+a.day_time).isBefore(new Date(+b.day_time)))
+        data.forEach(d => d.day_time = new Date(+d.day_time))
+        data.sort((a, b) => a.day_time.isBefore(b.day_time))
         var toSplice = []
         data.reverse().forEach((d,i) => {
             var current = +d.day_time
@@ -113,21 +114,21 @@ Promise.all(
 
         data.reverse()
 
-        //console.log(data.filter(d => d.day_time))
-        const myGroups = Array.from(new Set(data.map(d => new Date(+d.day_time).getWeek()))).sort((a,b) => a > b)
-        const myVars = Array.from(new Set(data.map(d => new Date(+d.day_time)))).sort((a,b) => {
-            var aday = a.getDay()-1 < 0 ? 6 : a.getDay()-1
-            var bday = b.getDay()-1 < 0 ? 6 : b.getDay()-1
-                                
-            return aday < bday
-        }).map(d => d.getWeekDay('ddd')).filter((u,i,self) => self.indexOf(u) === i)
-        console.log(myVars)
 
-
+        var dateTimeExtent = d3.extent(data, d => d.day_time)
+        // used to bin data by a time interval consistently, here data is being binned in a 2 hour interval
+        var thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
         height = gridsize*7
-        var width = myGroups.length > 1 ? (myGroups[myGroups.length-1] - myGroups[0])*gridsize : gridsize
+        //var width = myGroups.length > 1 ? (myGroups[myGroups.length-1] - myGroups[0])*gridsize : gridsize
 
-        var svg = d3.select("#my_dataviz")
+        var width
+        if(thresholds.length*8 < viewportwidth){
+            width = viewportwidth /*- marginright*/ - marginleft
+        }else{ 
+            width = thresholds.length*8 - marginright - marginleft
+        }
+
+        var data_svg = d3.select("#my_dataviz")
             .append("div")
             // Note the CSS rules for .chart
             .attr("class", "chart")
@@ -151,14 +152,14 @@ Promise.all(
             .text("week");
 
         // Use the gradient to set the shape fill, via CSS.
-        var axis = d3.select("#my_dataviz")
+        var y_axis = d3.select("#my_dataviz")
             .append("svg")
             .attr("class", "y-axis")
             .attr('width', marginleft)
             .attr('height', height + margintop + marginbottom)
             .style("top", marginbottom + 1)
 
-        var mainGradient = axis.append('defs')
+        var mainGradient = y_axis.append('defs')
             .append('linearGradient')
             .attr('id', 'mainGradient')
         
@@ -170,26 +171,25 @@ Promise.all(
             .attr('class', 'stop-right')
             .attr('offset', '1')
 
-        axis.append("rect")
+        y_axis.append("rect")
             .classed('filled', true)
             .attr('width', marginleft)
             .attr('height', height + margintop + marginbottom)
             
-        axis = axis.append("g")
+        y_axis = y_axis.append("g")
             .attr("transform", `translate(${marginleft}, 0)`)
             .on("click", function (d) {
-                console.log(`X clicked`)
+                console.log(`Y clicked`)
             })
 
-        var x_axis = d3.scaleBand()
-            .range([0, width])
-            .domain(myGroups)
-            .padding(0.05);
-
-        svg.append("g")
+        // X axis: scale and draw:
+        const x = d3.scaleTime()
+        .domain(dateTimeExtent)
+        
+        var x_axis = data_svg.append("g")
             .style("font-size", fontsizeaxis)
             .attr("transform", `translate(0, ${height})`)
-            .call(d3.axisBottom(x_axis).tickSize(0).tickPadding([16]))
+            .call(d3.axisBottom(x).tickSize(0).tickPadding([16]))
             .attr("class", "x_axis")
             .select(".domain").remove()
             .selectAll("text")
@@ -198,20 +198,11 @@ Promise.all(
                 console.log("wheeled")
             })
 
-        // axis.call(d3.axisBottom(x_axis).tickSize(0).tickPadding([16]))
-        // 	.selectAll("text")
-        // 	.style("text-anchor", "end")
-        // 	.style("position", "fixed")
-        // 	.attr("dx", 15)
-        // 	.attr("dy", 5)
-        // 	.attr("transform", "rotate(-65)");
-
-        var y_axis = d3.scaleBand()
+        var y = d3.scaleBand()
             .range([height, 0])
-            .domain(/*["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]*/myVars)
             .padding(0.05);
 
-        axis.call(d3.axisLeft(y_axis).tickSize(0).tickPadding([16]))
+        y_axis.call(d3.axisLeft(y).tickSize(0).tickPadding([16]))
             .style("font-size", fontsizeaxis)
             .select(".domain").remove()
             .selectAll("text")
@@ -224,6 +215,96 @@ Promise.all(
         var myColor = d3.scaleSequential()
             .interpolator(d3.interpolateInferno)
             .domain([30000, 100])
+        const stepCount = (d) => d.map(dd => +dd.count < 0 ? 0 : +dd.count).reduce((p,c) => p+c)
+
+        var oldK = 0
+        var oldSpan = 'd'
+
+        // A function that builds the graph for a specific value of bin
+        function update(span) {
+            let ticks
+            switch(span){
+                case 'm':
+                    thresholds = d3.timeMonth.every(1).range(...dateTimeExtent)
+                    ticks = thresholds
+                    break
+                case 'w':
+                    thresholds = d3.timeWeek.every(1).range(...dateTimeExtent)
+                    ticks = thresholds
+                    break
+                case 'h':
+                    thresholds = d3.timeHour.every(1).range(...dateTimeExtent)
+                    ticks = d3.timeHour.every(6).range(...dateTimeExtent)
+                    break
+                case 'd':
+                default:
+                    thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
+                    ticks = d3.timeMonday.every(1).range(...dateTimeExtent)
+            }
+            var width
+            if(thresholds.length*8 < viewportwidth){
+                width = viewportwidth /*- marginright*/ - marginleft
+            }else{ 
+                width = thresholds.length*8 - marginright - marginleft
+            }
+
+            data_svg.attr("width", width)
+            x.range([0, width])
+
+            // set the parameters for the histogram
+            var histogram = d3.histogram()
+                .value(function(d) { return d.day_time; })  // I need to give the vector of value
+                .domain(x.domain())  // then the domain of the graphic
+                .thresholds(/*x.ticks(nBin)*/thresholds); // then the numbers of bins
+            var bins = histogram(data);
+            x_axis.call(d3.axisBottom(x).tickValues(/*thresholds*/ticks))
+            let max = d3.max(bins, function(d) {
+                return stepCount(d)
+            })
+            // Y axis: update now that we know the domain
+            y.domain([0, max]);   // d3.hist has to be called before the Y axis obviously
+
+            y_axis
+                .transition()
+                .duration(1000)
+                .call(d3.axisLeft(y));
+
+            data_svg.selectAll()
+                .data(data, function (d) {
+                    return d.day_time;
+                })
+                .join("rect")
+                /*.enter()
+                .append("rect")*/
+                .attr("x", function (d) {
+                    let res = d3.utcMonday.count(d3.utcYear(d.day_time), d.day_time) * gridsize + 2
+                    console.log(res)
+                    return res
+                })
+                .attr("y", function (d) {
+                    let res = 0
+                    if(d.day_time instanceof Date && !isNaN(d.day_time)){
+                        res = d.day_time.getDay() * gridsize + 0.5
+                        console.log(res)
+                    }
+                    
+                    return res
+                })
+                .attr("rx", 4)
+                .attr("ry", 4)
+                .attr("width", /*x.bandwidth()*/24)
+                .attr("height", /*y.bandwidth()*/24)
+                .style("fill", function (d) {
+                    return d.count < 0 ? '#efebe9' : myColor(d.count)
+                })
+                .style("stroke-width", 4)
+                .style("stroke", "none")
+                .style("opacity", 0.8)
+                .on("mouseover", mouseover)
+                .on("mousemove", mousemove)
+                .on("mouseleave", mouseleave)
+                .on("click", tapsquare)
+        }
 
         // create a tooltip
         const tooltip = d3.select("#tile-details")
@@ -353,32 +434,6 @@ Promise.all(
           .attr("font-size", 14)
           .text("Steps");
 
-        svg.selectAll()
-        .data(data, function (d) {
-            return new Date(+d.day_time).getWeek()+':'+new Date(+d.day_time).getWeekDay('ddd');
-        })
-        .join("rect")
-        /*.enter()
-        .append("rect")*/
-        .attr("x", function (d) {
-            return x_axis(new Date(+d.day_time).getWeek())
-        })
-        .attr("y", function (d) {
-            return y_axis(new Date(+d.day_time).getWeekDay('ddd'))
-        })
-        .attr("rx", 4)
-        .attr("ry", 4)
-        .attr("width", x_axis.bandwidth())
-        .attr("height", y_axis.bandwidth())
-        .style("fill", function (d) {
-            return d.count < 0 ? '#efebe9' : myColor(d.count)
-        })
-        .style("stroke-width", 4)
-        .style("stroke", "none")
-        .style("opacity", 0.8)
-        .on("mouseover", mouseover)
-        .on("mousemove", mousemove)
-        .on("mouseleave", mouseleave)
-        .on("click", tapsquare)
+        update(oldSpan)
     })
 })
