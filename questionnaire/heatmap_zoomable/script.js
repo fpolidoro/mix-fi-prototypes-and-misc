@@ -15,6 +15,12 @@ Date.prototype.getWeek = function () {
     return 1 + Math.ceil((firstThursday - target) / 604800000);
 }
 
+Date.prototype.getWeekOfMonth = function() {
+    var firstWeekday = new Date(this.getFullYear(), this.getMonth(), 1).getDay() - 1;
+    if (firstWeekday < 0) firstWeekday = 6;
+    var offsetDate = this.getDate() + firstWeekday - 1;
+    return Math.floor(offsetDate / 7)+1;
+}
 
 Date.prototype.getWeekDay = function(format='') {
     const weekday = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
@@ -189,7 +195,6 @@ Promise.all(
         var x_axis = data_svg.append("g")
             .style("font-size", fontsizeaxis)
             .attr("transform", `translate(0, ${height})`)
-            .call(d3.axisBottom(x).tickSize(0).tickPadding([16]))
             .attr("class", "x_axis")
             .select(".domain").remove()
             .selectAll("text")
@@ -202,7 +207,7 @@ Promise.all(
             .range([height, 0])
             .padding(0.05);
 
-        y_axis.call(d3.axisLeft(y).tickSize(0).tickPadding([16]))
+        /*y_axis.call(d3.axisLeft(y).tickSize(0).tickPadding([16]))
             .style("font-size", fontsizeaxis)
             .select(".domain").remove()
             .selectAll("text")
@@ -210,7 +215,7 @@ Promise.all(
             .style("position", "fixed")
             .attr("transform", function(d,i){
                 return "rotate(-90 " + (50 + 80*i) + " 50)";
-            })
+            })*/
 
         var myColor = d3.scaleSequential()
             .interpolator(d3.interpolateInferno)
@@ -241,6 +246,13 @@ Promise.all(
                     thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
                     ticks = d3.timeMonday.every(1).range(...dateTimeExtent)
             }
+
+            var y_ticks = []
+            d3.timeDay.every(1).range(...dateTimeExtent).map(t => t.getWeekDay('dd')).forEach(t => {
+                if(y_ticks.findIndex(tt => tt === t) < 0)
+                    y_ticks.push(t)
+            })
+
             var width
             if(thresholds.length*8 < viewportwidth){
                 width = viewportwidth /*- marginright*/ - marginleft
@@ -262,38 +274,48 @@ Promise.all(
                 return stepCount(d)
             })
             // Y axis: update now that we know the domain
-            y.domain([0, max]);   // d3.hist has to be called before the Y axis obviously
+            y.domain(y_ticks);   // d3.hist has to be called before the Y axis obviously
 
             y_axis
                 .transition()
                 .duration(1000)
-                .call(d3.axisLeft(y));
+                .call(d3.axisLeft(y).tickValues(y_ticks));
 
             data_svg.selectAll()
                 .data(data, function (d) {
                     return d.day_time;
                 })
                 .join("rect")
-                /*.enter()
-                .append("rect")*/
                 .attr("x", function (d) {
                     let res = d3.utcMonday.count(d3.utcYear(d.day_time), d.day_time) * gridsize + 2
-                    console.log(res)
                     return res
                 })
                 .attr("y", function (d) {
                     let res = 0
                     if(d.day_time instanceof Date && !isNaN(d.day_time)){
-                        res = d.day_time.getDay() * gridsize + 0.5
-                        console.log(res)
+                        switch(span){
+                            case 'm':
+                                res = d.day_time.getMonth() * gridsize + 0.5
+                                break
+                            case 'w':
+                                res = d.day_time.getWeekOfMonth() * gridsize + 0.5
+                                break
+                            case 'h':
+                                //no such granularity yet
+                            case 'd':
+                            default:
+                                let day = d.day_time.getDay()-1
+                                day = day < 0 ? 6 : day
+                                res = day * gridsize + 0.5
+                        }
                     }
                     
                     return res
                 })
                 .attr("rx", 4)
                 .attr("ry", 4)
-                .attr("width", /*x.bandwidth()*/24)
-                .attr("height", /*y.bandwidth()*/24)
+                .attr("width", /*x.bandwidth()*/30)
+                .attr("height", /*y.bandwidth()*/30)
                 .style("fill", function (d) {
                     return d.count < 0 ? '#efebe9' : myColor(d.count)
                 })
