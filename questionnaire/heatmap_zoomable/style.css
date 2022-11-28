@@ -35,7 +35,7 @@ body {
 	fill: url(#mainGradient);
 }
 
-.y-axis-title {
+.x-axis-title {
 	font-size: 12px;
 	text-align: center;
 	color: #666;

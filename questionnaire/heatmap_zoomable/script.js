@@ -128,10 +128,11 @@ Promise.all(
         //var width = myGroups.length > 1 ? (myGroups[myGroups.length-1] - myGroups[0])*gridsize : gridsize
 
         var width
-        if(thresholds.length*8 < viewportwidth){
+        var original_w = Math.trunc(thresholds.length/7)*gridsize
+        if(original_w < viewportwidth){
             width = viewportwidth /*- marginright*/ - marginleft
         }else{ 
-            width = thresholds.length*8 - marginright - marginleft
+            width = original_w// - marginright - marginleft
         }
 
         var data_svg = d3.select("#my_dataviz")
@@ -152,7 +153,7 @@ Promise.all(
             .append("text")
             .attr("x", viewportwidth/2)
             .attr("y", height + margintop + marginbottom)
-            .attr("class", "y-axis-title")
+            .attr("class", "x-axis-title")
             .style("max-width", viewportwidth)
             .style("margin-left", marginleft)
             .text("week");
@@ -189,15 +190,12 @@ Promise.all(
             })
 
         // X axis: scale and draw:
-        const x = d3.scaleTime()
-        .domain(dateTimeExtent)
+        const x = d3.scaleTime().domain(dateTimeExtent)
         
         var x_axis = data_svg.append("g")
             .style("font-size", fontsizeaxis)
             .attr("transform", `translate(0, ${height})`)
-            .attr("class", "x_axis")
-            .select(".domain").remove()
-            .selectAll("text")
+            .attr("class", "x-axis")
             .on("wheel.zoom", function(event, d){
                 event.preventDefault()
                 console.log("wheeled")
@@ -205,7 +203,7 @@ Promise.all(
 
         var y = d3.scaleBand()
             .range([height, 0])
-            .padding(0.05);
+            //.padding(0.05);
 
         /*y_axis.call(d3.axisLeft(y).tickSize(0).tickPadding([16]))
             .style("font-size", fontsizeaxis)
@@ -252,12 +250,12 @@ Promise.all(
                 if(y_ticks.findIndex(tt => tt === t) < 0)
                     y_ticks.push(t)
             })
-
-            var width
-            if(thresholds.length*8 < viewportwidth){
+            original_w = Math.trunc(thresholds.length/7)*gridsize
+            
+            if(original_w > viewportwidth){
                 width = viewportwidth /*- marginright*/ - marginleft
-            }else{ 
-                width = thresholds.length*8 - marginright - marginleft
+            }else{
+                width = original_w //- marginright - marginleft
             }
 
             data_svg.attr("width", width)
@@ -265,29 +263,32 @@ Promise.all(
 
             // set the parameters for the histogram
             var histogram = d3.histogram()
-                .value(function(d) { return d.day_time; })  // I need to give the vector of value
+                .value(function(d) { return d.day_time })  // I need to give the vector of value
                 .domain(x.domain())  // then the domain of the graphic
-                .thresholds(/*x.ticks(nBin)*/thresholds); // then the numbers of bins
-            var bins = histogram(data);
-            x_axis.call(d3.axisBottom(x).tickValues(/*thresholds*/ticks))
+                .thresholds(/*x.ticks(nBin)*/thresholds) // then the numbers of bins
+            var bins = histogram(data)
+
+            x_axis.call(d3.axisBottom(x).tickValues(/*thresholds*/ticks).tickSize(0).tickFormat(d3.timeFormat("W%V"))).select(".domain").remove()
             let max = d3.max(bins, function(d) {
                 return stepCount(d)
             })
             // Y axis: update now that we know the domain
-            y.domain(y_ticks);   // d3.hist has to be called before the Y axis obviously
+            y.domain(y_ticks);  // d3.hist has to be called before the Y axis obviously
 
             y_axis
                 .transition()
                 .duration(1000)
-                .call(d3.axisLeft(y).tickValues(y_ticks));
+                .call(d3.axisLeft(y).tickSize(0).tickValues(y_ticks));
 
+            console.log(d3.utcMonday(data[0].day_time))
             data_svg.selectAll()
                 .data(data, function (d) {
                     return d.day_time;
                 })
                 .join("rect")
                 .attr("x", function (d) {
-                    let res = d3.utcMonday.count(d3.utcYear(d.day_time), d.day_time) * gridsize + 2
+                    let count = Math.abs(d3.utcMonday.count(/*d3.utcYear(d.day_time)*/d.day_time, data[data.length-1].day_time))
+                    let res = count * gridsize + 2
                     return res
                 })
                 .attr("y", function (d) {
