@@ -196,10 +196,31 @@ Promise.all(
             .style("font-size", fontsizeaxis)
             .attr("transform", `translate(0, ${height})`)
             .attr("class", "x-axis")
-            .on("wheel.zoom", function(event, d){
-                event.preventDefault()
-                console.log("wheeled")
-            })
+            .call(d3.zoom().on("zoom", function (e) {
+                //svg.attr("transform", d3.event.transform)
+                //if(Math.abs(oldK - e.transform.k) > 0.8){
+                    if(e.transform.k >= 1){
+                        console.log(`Zoom in ${e.transform.k}`)
+                    }else{
+                        console.log(`Zoom out ${e.transform.k}`)
+                    }
+
+                    if(e.transform.k < 0.5){
+                        span = 'h'
+                    }else if(e.transform.k >= 0.5 && e.transform.k < 1){
+                        span = 'd'
+                    }else if(e.transform.k >= 1 && e.transform.k < 2){
+                        span = 'w'
+                    }else if(e.transform.k >= 2){
+                        span = 'm'
+                    }
+                    if(oldSpan !== span){
+                        update(span)
+                        oldSpan = span
+                    }
+                    oldK = e.transform.k
+                //}
+            }))
 
         var y = d3.scaleBand()
             .range([height, 0])
@@ -261,6 +282,15 @@ Promise.all(
             data_svg.attr("width", width)
             x.range([0, width])
 
+            const mmonths = d3.rollup(data,
+                v => d3.sum(v, d => d.count),
+                d => d.day_time instanceof Date ? d.day_time.getMonth() : -1,
+                d => d.day_time instanceof Date ? d.day_time.getWeekDay() : -1
+            )
+            console.log(mmonths)
+            /*TODO: now must read the x on the first level of the map, and y on the second level of the map:
+            the value is what the square is going to display */
+
             // set the parameters for the histogram
             var histogram = d3.histogram()
                 .value(function(d) { return d.day_time })  // I need to give the vector of value
@@ -269,9 +299,16 @@ Promise.all(
             var bins = histogram(data)
 
             x_axis.call(d3.axisBottom(x).tickValues(/*thresholds*/ticks).tickSize(0).tickFormat(d3.timeFormat("W%V"))).select(".domain").remove()
+            
+            //compute max of domain by taking the ceiling of the actual max (e.g. 27321 becomes 30000)
             let max = d3.max(bins, function(d) {
                 return stepCount(d)
             })
+            let power = Math.pow(10, max.toString().length-1)
+            console.log(bins)
+            console.log(`max steps: ${Math.ceil(max/power)*power}`)
+
+
             // Y axis: update now that we know the domain
             y.domain(y_ticks);  // d3.hist has to be called before the Y axis obviously
 
@@ -281,12 +318,16 @@ Promise.all(
                 .call(d3.axisLeft(y).tickSize(0).tickValues(y_ticks));
 
             console.log(d3.utcMonday(data[0].day_time))
-            data_svg.selectAll()
-                .data(data, function (d) {
-                    return d.day_time;
+            var u = data_svg.selectAll()
+                .data(data, function(d){
+                    //console.log(d)
                 })
-                .join("rect")
+            
+            u.enter()
+                .append("rect") // Add a new rect for each new elements
+                .merge(u) // get the already existing elements as well
                 .attr("x", function (d) {
+                    //console.log(d)
                     let count = Math.abs(d3.utcMonday.count(/*d3.utcYear(d.day_time)*/d.day_time, data[data.length-1].day_time))
                     let res = count * gridsize + 2
                     return res
@@ -295,14 +336,14 @@ Promise.all(
                     let res = 0
                     if(d.day_time instanceof Date && !isNaN(d.day_time)){
                         switch(span){
-                            case 'm':
+                            /*case 'm':
                                 res = d.day_time.getMonth() * gridsize + 0.5
                                 break
                             case 'w':
                                 res = d.day_time.getWeekOfMonth() * gridsize + 0.5
                                 break
                             case 'h':
-                                //no such granularity yet
+                                //no such granularity yet*/
                             case 'd':
                             default:
                                 let day = d.day_time.getDay()-1
@@ -323,10 +364,12 @@ Promise.all(
                 .style("stroke-width", 4)
                 .style("stroke", "none")
                 .style("opacity", 0.8)
-                .on("mouseover", mouseover)
+                /*.on("mouseover", mouseover)
                 .on("mousemove", mousemove)
                 .on("mouseleave", mouseleave)
-                .on("click", tapsquare)
+                .on("click", tapsquare)*/
+
+            u.exit().remove()
         }
 
         // create a tooltip
