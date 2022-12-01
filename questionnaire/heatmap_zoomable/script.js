@@ -100,9 +100,9 @@ Promise.all(
             for(var i=0; i<Math.abs(d.diff); i++){
                 console.log(`start ${d.start+i}`)
                 var row = i === 0 ? Object.assign({}, data[d.start]) : Object.assign({}, rows[i-1])
-                console.log(`[${i}]day_time: ${row.day_time}`)                 
+                //console.log(`[${i}]day_time: ${row.day_time}`)                 
                 row.count = -1
-                console.log(`add ${new Date(+row.day_time)}`)
+                //console.log(`add ${new Date(+row.day_time)}`)
                 if(d.diff < 0){
                     row.day_time = +row.day_time - 24*3600*1000
                     rows.unshift(row)
@@ -119,7 +119,6 @@ Promise.all(
         })
 
         data.reverse()
-
 
         var dateTimeExtent = d3.extent(data, d => d.day_time)
         // used to bin data by a time interval consistently, here data is being binned in a 2 hour interval
@@ -215,7 +214,8 @@ Promise.all(
                         span = 'm'
                     }
                     if(oldSpan !== span){
-                        update(span)
+                        //update(span)
+                        x_zoom$.next(span)
                         oldSpan = span
                     }
                     oldK = e.transform.k
@@ -239,149 +239,6 @@ Promise.all(
         var myColor = d3.scaleSequential()
             .interpolator(d3.interpolateInferno)
             .domain([30000, 100])
-        const stepCount = (d) => d.map(dd => +dd.count < 0 ? 0 : +dd.count).reduce((p,c) => p+c)
-
-        var oldK = 0
-        var oldSpan = 'd'
-
-        // A function that builds the graph for a specific value of bin
-        function update(span) {
-            let ticks
-            switch(span){
-                case 'm':
-                    thresholds = d3.timeMonth.every(1).range(...dateTimeExtent)
-                    ticks = thresholds
-                    break
-                case 'w':
-                    thresholds = d3.timeWeek.every(1).range(...dateTimeExtent)
-                    ticks = thresholds
-                    break
-                case 'h':
-                    thresholds = d3.timeHour.every(1).range(...dateTimeExtent)
-                    ticks = d3.timeHour.every(6).range(...dateTimeExtent)
-                    break
-                case 'd':
-                default:
-                    thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
-                    ticks = d3.timeMonday.every(1).range(...dateTimeExtent)
-            }
-
-            var y_ticks = []
-            d3.timeDay.every(1).range(...dateTimeExtent).map(t => t.getWeekDay('dd')).forEach(t => {
-                if(y_ticks.findIndex(tt => tt === t) < 0)
-                    y_ticks.push(t)
-            })
-            original_w = Math.trunc(thresholds.length/7)*gridsize
-            
-            if(original_w > viewportwidth){
-                width = viewportwidth /*- marginright*/ - marginleft
-            }else{
-                width = original_w //- marginright - marginleft
-            }
-
-            data_svg.attr("width", width)
-            x.range([0, width])
-
-            const mmonths = d3.rollup(data,
-                v => d3.sum(v, d => d.count),
-                d => d.day_time instanceof Date ? d.day_time.getMonth() : -1,
-                d => d.day_time instanceof Date ? d.day_time.getWeekDay() : -1
-            )
-            console.log(mmonths)
-            /*TODO: now must read the x on the first level of the map, and y on the second level of the map:
-            the value is what the square is going to display */
-
-            // set the parameters for the histogram
-            var histogram = d3.histogram()
-                .value(function(d) { return d.day_time })  // I need to give the vector of value
-                .domain(x.domain())  // then the domain of the graphic
-                .thresholds(/*x.ticks(nBin)*/thresholds) // then the numbers of bins
-            var bins = histogram(data)
-
-            x_axis.call(d3.axisBottom(x).tickValues(/*thresholds*/ticks).tickSize(0).tickFormat(d3.timeFormat("W%V"))).select(".domain").remove()
-            
-            //compute max of domain by taking the ceiling of the actual max (e.g. 27321 becomes 30000)
-            let max = d3.max(bins, function(d) {
-                return stepCount(d)
-            })
-            let power = Math.pow(10, max.toString().length-1)
-            console.log(bins)
-            console.log(`max steps: ${Math.ceil(max/power)*power}`)
-
-
-            // Y axis: update now that we know the domain
-            y.domain(y_ticks);  // d3.hist has to be called before the Y axis obviously
-
-            y_axis
-                .transition()
-                .duration(1000)
-                .call(d3.axisLeft(y).tickSize(0).tickValues(y_ticks));
-
-            console.log(d3.utcMonday(data[0].day_time))
-            var u = data_svg.selectAll()
-                .data(data, function(d){
-                    //console.log(d)
-                })
-            
-            u.enter()
-                .append("rect") // Add a new rect for each new elements
-                .merge(u) // get the already existing elements as well
-                .attr("x", function (d) {
-                    //console.log(d)
-                    let count = Math.abs(d3.utcMonday.count(/*d3.utcYear(d.day_time)*/d.day_time, data[data.length-1].day_time))
-                    let res = count * gridsize + 2
-                    return res
-                })
-                .attr("y", function (d) {
-                    let res = 0
-                    if(d.day_time instanceof Date && !isNaN(d.day_time)){
-                        switch(span){
-                            /*case 'm':
-                                res = d.day_time.getMonth() * gridsize + 0.5
-                                break
-                            case 'w':
-                                res = d.day_time.getWeekOfMonth() * gridsize + 0.5
-                                break
-                            case 'h':
-                                //no such granularity yet*/
-                            case 'd':
-                            default:
-                                let day = d.day_time.getDay()-1
-                                day = day < 0 ? 6 : day
-                                res = day * gridsize + 0.5
-                        }
-                    }
-                    
-                    return res
-                })
-                .attr("rx", 4)
-                .attr("ry", 4)
-                .attr("width", /*x.bandwidth()*/30)
-                .attr("height", /*y.bandwidth()*/30)
-                .style("fill", function (d) {
-                    return d.count < 0 ? '#efebe9' : myColor(d.count)
-                })
-                .style("stroke-width", 4)
-                .style("stroke", "none")
-                .style("opacity", 0.8)
-                /*.on("mouseover", mouseover)
-                .on("mousemove", mousemove)
-                .on("mouseleave", mouseleave)
-                .on("click", tapsquare)*/
-
-            u.exit().remove()
-        }
-
-        // create a tooltip
-        const tooltip = d3.select("#tile-details")
-        .append("div")
-        .style("opacity", 0)
-        .attr("class", "tooltip")
-        .style("background-color", "white")
-        .style("border", "solid")
-        .style("border-width", "2px")
-        .style("border-radius", "5px")
-        .style("padding", "5px")
 
         // Three function that change the tooltip when user hover / move / leave a cell
         const mouseover = function(event,d) {
@@ -393,7 +250,7 @@ Promise.all(
         }
         const mousemove = function(event,d) {
             tooltip
-                .html(`${new Date(+d.day_time).toString()} steps: ${d.count < 0 ? 'No data' : d.count}`)
+                .html(`${new Date(+d[0]).toString()} steps: ${d.count < 0 ? 'No data' : d.count}`)
                 .style("left", (event.x)/2 + "px")
                 .style("top", (event.y)/2 + "px")
         }
@@ -404,6 +261,293 @@ Promise.all(
                 .style("stroke", "none")
                 .style("opacity", 0.8)
         }
+
+        var y_zoom$ = new rxjs.BehaviorSubject('d')
+        var x_zoom$ = new rxjs.BehaviorSubject('d')
+        rxjs.combineLatest([
+            x_zoom$.pipe(
+                rxjs.operators.map(span => {
+                    let ticks
+                    let thresholds
+                    let lambda
+
+                    switch(span){
+                        case 'm':
+                            thresholds = d3.timeMonth.every(1).range(...dateTimeExtent)
+                            ticks = thresholds
+                            lambda = d => d.day_time instanceof Date ? d.day_time.getMonth() : -1
+                            break
+                        case 'w':
+                            thresholds = d3.timeWeek.every(1).range(...dateTimeExtent)
+                            ticks = thresholds
+                            lambda = d => d.day_time instanceof Date ? d.day_time.getWeek() : -1
+                            break
+                        case 'h':
+                            thresholds = d3.timeHour.every(1).range(...dateTimeExtent)
+                            ticks = d3.timeHour.every(6).range(...dateTimeExtent)
+                            lambda = () => {}   //TODO
+                            break
+                        case 'd':
+                        default:
+                            thresholds = d3.timeDay.every(1).range(...dateTimeExtent)
+                            ticks = d3.timeMonday.every(1).range(...dateTimeExtent)
+                            lambda = d => d.day_time instanceof Date ? d.day_time.valueOf() : -1
+                    }
+                    return {span: span, ticks: ticks, thresholds: thresholds, lambda: lambda}
+                })
+            ),
+            y_zoom$.pipe(
+                rxjs.operators.map(span => {
+                    let ticks
+                    let thresholds
+                    let lambda
+                    let offset
+                    let label
+
+                    switch(span){
+                        case 'm':
+                            thresholds = d3.timeMonth.every(1).range(...dateTimeExtent)
+                            ticks = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                            lambda = d => d.day_time instanceof Date ? d.day_time.valueOf() : -1
+                            offset = d => Math.abs(d3.utcMonday.count(d, data[data.length-1].day_time))
+                            label = "%m"
+                            break
+                        case 'w':
+                            thresholds = d3.timeWeek.every(1).range(...dateTimeExtent)
+                            ticks = d3.range([0,6]).reverse()
+                            lambda = d => d.day_time instanceof Date ? d.day_time.getDay() : -1
+                            offset = d => Math.abs(d3.utcMonday.count(d, data[data.length-1].day_time))
+                            label = "W%V"
+                            break
+                        case 'h':
+                            thresholds = d3.timeHour.every(1).range(...dateTimeExtent)
+                            ticks = d3.timeHour.every(6).range(...dateTimeExtent)
+                            lambda = () => {}   //TODO
+                            label = "%H"
+                            break
+                        case 'd':
+                        default:
+                            thresholds = d3.timeWeek.every(1).range(...dateTimeExtent)
+                            ticks = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].reverse()
+                            lambda = d => d.day_time instanceof Date ? d.day_time.getDay() : -1
+                            offset = d => Math.abs(d3.utcMonday.count(d, data[data.length-1].day_time))
+                            label = "W%V"
+                    }
+                    return {span: span, ticks: ticks, thresholds: thresholds, lambda: lambda, offset: offset, label: label}
+                })
+            )
+        ]).subscribe(([xbun, ybun]) => {
+            console.log(`combineLatest to update: (${xbun.span}, ${ybun.span})`)
+            
+            original_w = Math.trunc(xbun.thresholds.length/ybun.ticks.length)*gridsize
+            
+            if(original_w > viewportwidth){
+                width = viewportwidth /*- marginright*/ - marginleft
+            }else{
+                width = original_w //- marginright - marginleft
+            }
+
+            data_svg.attr("width", width)
+            x.range([0, width])
+            console.log(width)
+
+            let min = 0
+            let max = 0
+            const ddata = d3.rollup(data,
+                v => {
+                    let sum = d3.sum(v, d => d.count)
+                    if(sum < min && sum > 0) min = sum
+                    if(sum > max) max = sum
+                    return sum
+                },
+                xbun.lambda,
+                ybun.lambda
+            )
+            console.log(ddata)
+            
+            //compute max and min values for the domain of the legend and heatmap squares
+            let maxr = Math.pow(10, max.toString().length-1)
+            let minr = Math.pow(10, min.toString().length-1)
+            myColor.domain([Math.ceil(max/maxr)*maxr, Math.floor(min/minr)*minr])
+
+            x_axis.call(d3.axisBottom(x).tickValues(/*thresholds*/xbun.ticks).tickSize(0).tickFormat(d3.timeFormat(ybun.label))).select(".domain").remove()
+            
+            // Y axis: update now that we know the domain
+            y.domain(ybun.ticks);  // d3.hist has to be called before the Y axis obviously
+
+            y_axis
+                .transition()
+                .duration(1000)
+                .call(d3.axisLeft(y).tickSize(0).tickValues(ybun.ticks));
+
+            var u = data_svg.selectAll()
+                .data(ddata)
+            
+            u.enter()
+                .append("rect") // Add a new rect for each new elements
+                .merge(u) // get the already existing elements as well
+                .attr("x", function (d) {
+                    console.log(d)
+                    let count = ybun.offset(new Date(+d[0]))
+                    let res = count * gridsize + 2
+                    return res
+                })
+                .attr("y", function (d) {
+                    let res = 0
+                    //console.log(d[1])
+                    d[1].forEach((v,k) => {
+                        //console.log(`${k} ${v}`)
+                        res += +k*gridsize + 0.5
+                    })
+                    //console.log(res)
+                    return res
+                })
+                .attr("rx", 4)
+                .attr("ry", 4)
+                .attr("width", /*x.bandwidth()*/30)
+                .attr("height", /*y.bandwidth()*/30)
+                .on("mouseover", mouseover)
+                .on("mousemove", mousemove)
+                .on("mouseleave", mouseleave)
+                //.on("click", tapsquare)
+                .style("fill", function (d) {
+                    let count = 0
+                    d[1].forEach((v,k) => count += v)
+                    return count < 0 ? '#efebe9' : myColor(count)
+                })
+                .style("stroke-width", 4)
+                .style("stroke", "none")
+                .style("opacity", 0.8)
+
+            u.exit().remove()
+        })
+
+
+        const stepCount = (d) => d.map(dd => +dd.count < 0 ? 0 : +dd.count).reduce((p,c) => p+c)
+
+        var oldK = 0
+        var oldSpan = 'd'
+
+        // // A function that builds the graph for a specific value of bin
+        // function update(span) {
+
+        //     var y_ticks = []
+        //     d3.timeDay.every(1).range(...dateTimeExtent).map(t => t.getWeekDay('dd')).forEach(t => {
+        //         if(y_ticks.findIndex(tt => tt === t) < 0)
+        //             y_ticks.push(t)
+        //     })
+        //     original_w = Math.trunc(thresholds.length/7)*gridsize
+            
+        //     if(original_w > viewportwidth){
+        //         width = viewportwidth /*- marginright*/ - marginleft
+        //     }else{
+        //         width = original_w //- marginright - marginleft
+        //     }
+
+        //     data_svg.attr("width", width)
+        //     x.range([0, width])
+
+        //     const mmonths = d3.rollup(data,
+        //         v => d3.sum(v, d => d.count),
+        //         d => d.day_time instanceof Date ? d.day_time.getMonth() : -1,
+        //         d => d.day_time instanceof Date ? d.day_time.getWeekDay() : -1
+        //     )
+        //     console.log(mmonths)
+        //     /*TODO: now must read the x on the first level of the map, and y on the second level of the map:
+        //     the value is what the square is going to display */
+
+
+        //     // set the parameters for the histogram
+        //     var histogram = d3.histogram()
+        //         .value(function(d) { return d.day_time })  // I need to give the vector of value
+        //         .domain(x.domain())  // then the domain of the graphic
+        //         .thresholds(/*x.ticks(nBin)*/thresholds) // then the numbers of bins
+        //     var bins = histogram(data)
+
+        //     x_axis.call(d3.axisBottom(x).tickValues(/*thresholds*/ticks).tickSize(0).tickFormat(d3.timeFormat("W%V"))).select(".domain").remove()
+            
+        //     //compute max of domain by taking the ceiling of the actual max (e.g. 27321 becomes 30000)
+        //     let max = d3.max(bins, function(d) {
+        //         return stepCount(d)
+        //     })
+        //     let power = Math.pow(10, max.toString().length-1)
+        //     console.log(bins)
+        //     console.log(`max steps: ${Math.ceil(max/power)*power}`)
+
+
+        //     // Y axis: update now that we know the domain
+        //     y.domain(y_ticks);  // d3.hist has to be called before the Y axis obviously
+
+        //     y_axis
+        //         .transition()
+        //         .duration(1000)
+        //         .call(d3.axisLeft(y).tickSize(0).tickValues(y_ticks));
+
+        //     console.log(d3.utcMonday(data[0].day_time))
+        //     var u = data_svg.selectAll()
+        //         .data(data, function(d){
+        //             //console.log(d)
+        //         })
+            
+        //     u.enter()
+        //         .append("rect") // Add a new rect for each new elements
+        //         .merge(u) // get the already existing elements as well
+        //         .attr("x", function (d) {
+        //             //console.log(d)
+        //             let count = Math.abs(d3.utcMonday.count(/*d3.utcYear(d.day_time)*/d.day_time, data[data.length-1].day_time))
+        //             let res = count * gridsize + 2
+        //             return res
+        //         })
+        //         .attr("y", function (d) {
+        //             let res = 0
+        //             if(d.day_time instanceof Date && !isNaN(d.day_time)){
+        //                 switch(span){
+        //                     /*case 'm':
+        //                         res = d.day_time.getMonth() * gridsize + 0.5
+        //                         break
+        //                     case 'w':
+        //                         res = d.day_time.getWeekOfMonth() * gridsize + 0.5
+        //                         break
+        //                     case 'h':
+        //                         //no such granularity yet*/
+        //                     case 'd':
+        //                     default:
+        //                         let day = d.day_time.getDay()-1
+        //                         day = day < 0 ? 6 : day
+        //                         res = day * gridsize + 0.5
+        //                 }
+        //             }
+                    
+        //             return res
+        //         })
+        //         .attr("rx", 4)
+        //         .attr("ry", 4)
+        //         .attr("width", /*x.bandwidth()*/30)
+        //         .attr("height", /*y.bandwidth()*/30)
+        //         .style("fill", function (d) {
+        //             return d.count < 0 ? '#efebe9' : myColor(d.count)
+        //         })
+        //         .style("stroke-width", 4)
+        //         .style("stroke", "none")
+        //         .style("opacity", 0.8)
+        //         /*.on("mouseover", mouseover)
+        //         .on("mousemove", mousemove)
+        //         .on("mouseleave", mouseleave)
+        //         .on("click", tapsquare)*/
+
+        //     u.exit().remove()
+        // }
+
+        // create a tooltip
+        const tooltip = d3.select("#tile-details")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "white")
+        .style("border", "solid")
+        .style("border-width", "2px")
+        .style("border-radius", "5px")
+        .style("padding", "5px")
 
         const tapsquare = function(event, d) {
             if(this === oldData){
@@ -500,6 +644,6 @@ Promise.all(
           .attr("font-size", 14)
           .text("Steps");
 
-        update(oldSpan)
+        //update(oldSpan)
     })
 })
