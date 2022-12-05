@@ -4,11 +4,12 @@ body {
 
 #anim {
 	background-image: url('heatmap_sprites.svg');
-	width: 892px;
+	width: 922px;
 	height: 250px;
-	animation: anim 1.5s steps(5) infinite;
-  }
-  @keyframes anim {
-	20% { background-position-y: 0px;}
-	80%, 100% { background-position-y: -1250px;}
-  }
+	/*animation: anim 1s steps(4) infinite;*/
+}
+
+@keyframes anim {
+	0% { background-position-y: 0px;}
+	40%, 100% { background-position-y: -1000px;}
+}
