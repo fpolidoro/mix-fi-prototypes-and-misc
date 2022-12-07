@@ -2,10 +2,16 @@ body {
 	font-family: 'Roboto', sans-serif;
 }
 
-#anim {
+/*#anim {
 	background-image: url('heatmap_sprites.svg');
 	width: 922px;
 	height: 250px;
+}*/
+
+#anim {
+	background-image: url('sprites_heatmap_bw.png');
+	width: 857px;
+	height: 244px;
 	/*animation: anim 1s steps(4) infinite;*/
 }
 
