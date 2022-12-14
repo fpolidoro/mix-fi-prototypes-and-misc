@@ -144,7 +144,7 @@ Promise.all(
         .attr("text-anchor", "middle")
         .style("user-select", "none")
       .selectAll("text")
-      .data(root/*.descendants()*/)
+      .data(root.descendants())
       .join("text")
         .attr("dy", "0.35em")
         .attr("fill-opacity", d => +labelVisible(d.current))
@@ -207,13 +207,13 @@ Promise.all(
     }
   
     function labelVisible(d) {
-      return d.y1 <= 4 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+      return d.y1 <= 4 && d.y0 >= 0 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
     }
   
     function labelTransform(d) {
       const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
-      const y = (d.y0 + d.y1) / 2 * radius;
-      return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+      const y = d.y0 > 0 ? (d.y0 + d.y1) / 2 * radius : 0;
+      return `rotate(${d.y0 > 0 ? (x - 90) : 0}) translate(${y},0) rotate(${d.y0 > 0 ? (x < 180 ? 0 : 180) : 0})`;
     }
   })
 })
