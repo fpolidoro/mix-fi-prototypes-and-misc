@@ -1,45 +1,63 @@
 {
-    "name": "active time",
-    "children": [
-      {
-        "name": "walk sessions",
-        "children": [
-          {"name": "42.37", "size": 42.37},
-          {"name": "11.02", "size": 11.02},
-          {"name": "24.59", "size": 24.59},
-          {"name": "33.06", "size": 33.06}
-        ]
-      },
-      {
-        "name": "swim sessions",
-        "children": [
-          {
-            "name": "breaststroke",
-            "children": [
-              {"name": "10.07", "size": 10.07},
-              {"name": "10.12", "size": 10.12},
-              {"name": "11.01", "size": 11.01},
-              {"name": "10.58", "size": 10.58}
-            ]
-          },
-          {
-            "name": "backstroke",
-            "children": [
-              {"name": "10.45", "size": 10.45},
-              {"name": "10.52", "size": 10.52}
-            ]
-          },
-          {
-            "name": "freestyle",
-            "children": [
-              {"name": "9.28", "size": 9.28},
-              {"name": "9.43", "size": 9.43},
-              {"name": "9.31", "size": 9.31},
-              {"name": "9.11", "size": 9.11}
-            ]
-          }
-        ]
-      }
-    ]
-  }
-  
+  "name": "active time",
+  "children": [
+    {
+      "name": "walk",
+      "children": [
+        {
+          "name": "sessions",
+          "children": [
+            {"name": "1", "duration": 42.37},
+            {"name": "2", "duration": 11.02},
+            {"name": "3", "duration": 24.59},
+            {"name": "4", "duration": 33.06}
+          ]
+        },
+        {
+          "name": "0",
+          "duration": "37.12"
+        }
+      ]
+    },
+    {
+      "name": "swim",
+      "children": [
+        {
+          "name": "sessions",
+          "children": [
+            {
+              "name": "breaststroke",
+              "children": [
+                {"name": "1", "duration": 10.07},
+                {"name": "2", "duration": 10.12},
+                {"name": "3", "duration": 11.01},
+                {"name": "4", "duration": 10.58}
+              ]
+            },
+            {
+              "name": "backstroke",
+              "children": [
+                {"name": "1", "duration": 10.45},
+                {"name": "2", "duration": 10.52}
+              ]
+            },
+            {
+              "name": "freestyle",
+              "children": [
+                {"name": "1", "duration": 9.28},
+                {"name": "2", "duration": 9.43},
+                {"name": "3", "duration": 9.31},
+                {"name": "4", "duration": 9.11}
+              ]
+            }
+          ]
+        },
+        {
+          "name": "0",
+          "duration": "2.34"
+        }
+      ]
+      
+    }
+  ]
+}
