@@ -1,12 +1,12 @@
 var modules = [
   //`https://cdnjs.cloudflare.com/ajax/libs/d3/7.6.1/d3.min.js`,
   //`https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js`
-  `../../../libs/d3.v6.js`,
-  `../../../libs/jquery-3.6.0-min.js`
+  `../../../../libs/d3.v6.js`,
+  `../../../../libs/jquery-3.6.0-min.js`
 ]
 
 const el = document.getElementById("anim")
-const MIN = 244//250
+const MIN = 246//250
 const MAX = MIN*3//750
 const LAST = MIN+MAX
 
