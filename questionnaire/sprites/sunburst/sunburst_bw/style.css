@@ -1,0 +1,21 @@
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+/*#anim {
+	background-image: url('heatmap_sprites.svg');
+	width: 922px;
+	height: 250px;
+}*/
+
+#anim {
+	background-image: url('sprites.jpeg');
+	width: 435px;/*857px;*/
+	height: 426.6px;/*244px;*/
+	background-position-x: 435px;
+}
+
+@keyframes anim {
+	0% { background-position-y: 0px;}
+	40%, 100% { background-position-y: -1706.4px;}
+}

@@ -1,0 +1,36 @@
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+/*#anim {
+	background-image: url('heatmap_sprites.svg');
+	width: 922px;
+	height: 250px;
+}*/
+
+#anim {
+	background-image: url('sprites.jpeg');
+	background-position-x: 439px;
+	width: 439px;/*857px;*/
+	height: 426.6px;/*244px;*/
+	/*animation: anim 1s steps(4) infinite;*/
+	animation: anim 2s steps(4) infinite;
+}
+
+#target {
+	position: absolute;
+	left: 60px;
+	top: 110px;
+	width: 80px;
+	height: 80px;
+	background-color: rebeccapurple;
+	opacity: 0.5;
+	content: "";
+	border-radius: 50%;
+	animation: anim 1s steps(4) infinite;
+}
+
+@keyframes anim {
+	0% { background-position-y: 0px;}
+	40%, 100% { background-position-y: -1706.4px;}
+}
