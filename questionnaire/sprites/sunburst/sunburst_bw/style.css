@@ -9,10 +9,34 @@ body {
 }*/
 
 #anim {
+	position: relative;
 	background-image: url('sprites.jpeg');
 	width: 435px;/*857px;*/
 	height: 426.6px;/*244px;*/
-	background-position-x: 435px;
+	/*background-position-x: 435px;*/
+}
+
+#ia-1 {
+	position: absolute;
+	top: 150px;
+	left: 150px;
+	width: 120px;
+	height: 120px;
+	content: '';
+	background-color: blueviolet;
+	opacity: .5;
+	border-radius: 50%;
+}
+
+#ia-2 {
+	position: absolute;
+	top: 80px;
+	left: 48px;
+	width: 100px;
+	height: 120px;
+	content: '';
+	background-color: aquamarine;
+	opacity: .5;
 }
 
 @keyframes anim {
