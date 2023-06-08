@@ -44,10 +44,10 @@ Promise.all(
     })
     .on("zoom", e => {
       if(Math.abs(lastPos) === MID && touchCount > 1){
-        if(e.transform.k - startK > 0 && lastPosY <= -MIN_1){
+        /*if(e.transform.k - startK > 0 && lastPosY <= -MIN_1){
           //console.log(`Zoom in ${e.transform.k}`)
           el.style.backgroundPositionY = `${lastPosY += MIN_1}px`
-        }else if(e.transform.k - startK < 0 && lastPosY >= -MAX_1){
+        }else */if(e.transform.k - startK < 0 && lastPosY >= -MAX_1){
           console.log(`Zoom out ${e.transform.k}`)
           el.style.backgroundPositionY = `${lastPosY -= MIN_1}px`
         }/*else{
@@ -59,14 +59,14 @@ Promise.all(
     .on("end", e => {
       if(Math.abs(lastPos) === MID && touchCount > 1){
         //console.log(`zoom`)
-      if(e.transform.k - startK > 0 && lastPosY <= -MIN_1){
+      /*if(e.transform.k - startK > 0 && lastPosY <= -MIN_1){
         console.log(`Zoom in ${e.transform.k}`)
         el.style.backgroundPositionY = `${lastPosY = -LAST_1}px`
-      }else if(e.transform.k - startK < 0 && lastPosY >= -MAX_1){
+      }else*/ if(e.transform.k - startK < 0 && lastPosY >= -MAX_1){
         console.log(`Zoom out ${e.transform.k}`)
         el.style.backgroundPositionY = `${lastPosY = 0}px`
       }
-      area.style.pointerEvents = 'none'
+      //area.style.pointerEvents = 'none'
       //console.info(`zoom end, bpy: ${el.style.backgroundPositionY}`)
       }
     })

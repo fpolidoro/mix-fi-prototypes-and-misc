@@ -8,6 +8,12 @@ body {
 	height: 250px;
 }*/
 
+#container {
+	width: 100%;
+	overflow: auto;
+	position: relative;
+}
+
 #anim {
 	background-image: url('sprites.png');
 	background-position-x: 0px;
