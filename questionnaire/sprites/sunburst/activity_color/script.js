@@ -75,33 +75,9 @@ Promise.all(
     d3.select(`#${id}`).call(zoom)
   }
 
-  /*d3.select("#ia-2").on("click", () => {
-    if(lastPos%MAX_1 === 0){  //animate only if we are on the first frame
-      //document.getElementById("ia-2").style.pointerEvents = 'auto'
-      el.style.backgroundPositionY = '0px'
-      console.log(`iterations: ${Math.trunc(MAX_2/MIN_2)}`)
-      let lastPosY = 0
-      function animate(i) {
-        setTimeout(() => {
-          lastPosY -= MIN_2
-          console.log(`i: ${i}, pos: ${lastPosY}`)
-          el.style.backgroundPositionY = `${lastPosY}px`
-          lastPos = lastPosY
-          lastPosY$.next(lastPos)
-          if (i++ < Math.trunc(MAX_2/MIN_2)){
-            animate(i)
-          }   //decrement i and call animate again if i > 0
-        }, (MAX_2/MIN_2)*50)
-      }
-      animate(0)
-    }//else{
-      //document.getElementById("ia-2").style.pointerEvents = 'none'
-    //}
-  })*/
-
   //zoom('ia-3', ia3)
 
-  d3.select('#ia-3').on("click", () => {
+  /*d3.select('#ia-3').on("click", () => {
     //if(lastPos%MAX_1 !== 0){  //disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
       //document.getElementById("ia-1").style.pointerEvents = 'auto'
       let lastPosY = lastPos
@@ -124,7 +100,7 @@ Promise.all(
       }
       animate(iterations-1)
     //}
-  })
+  })*/
 
   d3.select("#reset").on("click", () => {
     el.style.backgroundPositionX = '0px'
@@ -188,17 +164,41 @@ script.onload = () => {
         }))
       )),
       window.rxjs.takeWhile(([i, lpY]) => {
-        console.info(`ia-1 ${lpY === 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
+        console.info(`ia-2 ${lpY === 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
         return lpY === 0
       }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
       window.rxjs.take(5)
     ))
   ).subscribe(([i, lPosY]) => {
-    console.log(`animating IA-1: ${i}, ${lPosY+MIN_1*i}`)
+    console.log(`animating IA-2: ${i}, ${lPosY+MIN_1*i}`)
     el.style.backgroundPositionY = `-${lPosY+MIN_1*i}px`
     if(i === 4){
       console.info(`updating lastPosY$ with ${(lPosY+MIN_1*i)%MAX_1}`)
       lastPosY$.next((lPosY+MIN_1*i)%MAX_1)
+    }
+  })
+
+  const ia3Zoom$ = window.rxjs.fromEvent(ia3, 'dblclick')
+  ia3Zoom$.pipe(
+    window.rxjs.exhaustMap(() => window.rxjs.interval(100).pipe(
+      window.rxjs.withLatestFrom(lastPosY$.pipe(
+        window.rxjs.map((lpY => {
+          console.log(`${lpY}`)
+          return lpY%MAX_1
+        }))
+      )),
+      window.rxjs.takeWhile(([i, lpY]) => {
+        console.info(`ia-3 ${Math.abs(lpY) === MID ? 'enabled' : 'disabled'} because lpY=${lpY}`)
+        return Math.abs(lpY) === MID
+      }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
+      window.rxjs.take(5)
+    ))
+  ).subscribe(([i, lPosY]) => {
+    console.log(`animating IA-3: ${i}, ${lPosY-MIN_1*i}`)
+    el.style.backgroundPositionY = `-${lPosY-MIN_1*i}px`
+    if(i === 4){
+      console.info(`updating lastPosY$ with ${(lPosY-MIN_1*i)%MAX_1}`)
+      lastPosY$.next((lPosY-MIN_1*i)%MAX_1)
     }
   })
 }      
