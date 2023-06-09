@@ -25,8 +25,8 @@ body {
 
 #ia-1 {
 	position: absolute;
-	top: 107px;
-	left: 123px;
+	top: 96px;
+	left: 114px;
 	width: 60px;
 	height: 60px;
 	content: '';
@@ -38,8 +38,8 @@ body {
 
 #ia-2 {
 	position: absolute;
-	top: 69px;
-	left: 33px;
+	top: 60px;
+	left: 20px;
 	width: 100px;
 	height: 38px;
 	content: '';
