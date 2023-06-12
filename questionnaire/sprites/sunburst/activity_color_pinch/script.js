@@ -279,7 +279,7 @@ Promise.all(
 
 
     var eventMap = new Map()
-    var mousemove = window.rxjs.merge(
+    /*var mousemove = window.rxjs.zip(
       window.rxjs.fromEvent(document, 'mousemove').pipe(
         window.rxjs.tap(() => console.log(`mousemove`)),
         window.rxjs.map((e) => { e.preventDefault(); return e; })),
@@ -303,8 +303,8 @@ Promise.all(
           //console.log(e)
           
           var rect = e.target.getBoundingClientRect();
-          /*e.offsetX = e.touches[0].pageX - rect.left;
-          e.offsetY = e.touches[0].pageY - rect.top;*/
+          //e.offsetX = e.touches[0].pageX - rect.left;
+          //e.offsetY = e.touches[0].pageY - rect.top;
           return {
             touches: e.touches,
             rect: rect
@@ -321,8 +321,8 @@ Promise.all(
               if(!isNaN(k)){
                 //console.log(mm[k])
                 eventMap.set(mm[k].identifier, {
-                  left: mm[k].clientX - (/*start.touches[k].pageX - */start.rect.left),
-                  top: mm[k].clientY - (/*start.touches[k].pageY - */start.rect.top),
+                  left: mm[k].clientX - (//start.touches[k].pageX - start.rect.left),
+                  top: mm[k].clientY - (//start.touches[k].pageY - //start.rect.top),
                   endX: mm[k].clientX,
                   endY: mm[k].clientY,
                 })
@@ -383,44 +383,73 @@ Promise.all(
 
       var dist = (pos.endX - cx) * (pos.endX - cx) + (pos.endY - cy) * (pos.endY - cy)
       console.warn(`end is ${dist < r*r ? 'within' : 'outside'} circle`)
+    })*/
+
+    window.rxjs.zip(
+      window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
+        window.rxjs.take(1),
+        window.rxjs.tap(() => console.log(`touchStart #1`))
+      ),
+      window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for second touch: fire only if touches are more than 1
+        window.rxjs.filter(ev => ev.touches.length > 1),
+        window.rxjs.tap(() => console.log(`touchStart #2`)),
+        window.rxjs.take(1)
+      )
+    ).pipe(
+      window.rxjs.mergeMap(([start1, start2]) => {
+        console.log(start1)
+        console.log(start2)
+        let startDist = Math.hypot(start1.changedTouches[0].clientX - start2.changedTouches[0].clientX, start1.changedTouches[0].clientY-start2.changedTouches[0].clientY)
+        console.log(`distance between s1,s2 = ${startDist}`)
+
+        console.log(`touchDown`)
+        return window.rxjs.fromEvent(el, 'touchmove').pipe(
+          //window.rxjs.tap(mm => console.log(mm)),
+          window.rxjs.map(mm => {
+            let currentDist = Math.hypot(mm.touches[0].clientX-mm.touches[1].clientX, mm.touches[0].clientY-mm.touches[1].clientY)
+            return {
+              distance: {
+                current: currentDist,
+                start: startDist,
+              },
+              touches: mm.touches
+            }
+          }),
+          //window.rxjs.tap(mm => {})
+          window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
+            window.rxjs.filter(end => end.touches.length < 2),  //stop when there are less than two fingers touching the screen
+            window.rxjs.tap(() => console.info(`touchEnd`))
+          ))
+        )
+      }),
+      window.rxjs.repeat()  //restart from zip after processing this multi-touch
+    ).subscribe(move => {
+      //console.log(move)
+
+      if(move.distance.current < move.distance.start){
+        console.warn(`Pinch IN`)
+        let mid = {
+          x: (move.touches[0].clientX+move.touches[1].clientX)/2,
+          y: (move.touches[0].clientY+move.touches[1].clientY)/2
+        }
+  
+        var rect = ia1.getBoundingClientRect();
+        var r = Math.abs(rect.top-rect.bottom)/2
+        var cx = rect.left + Math.abs(rect.left-rect.right)/2
+        var cy = rect.top + r
+        //console.log(`rect: t=${rect.top}, l=${rect.left}, b=${rect.bottom}, r=${rect.right}`)
+        //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
+  
+        var dist = (mid.x - cx) * (mid.x - cx) + (mid.y - cy) * (mid.y - cy)
+        if(dist < r*r){
+          console.warn(`end is within circle`)
+        }else{
+          console.log(`end is outside circle`)
+        }
+        
+      }else{
+        console.info(`Pinch OUT`)
+      }
     })
-/*
-    var flattenTouches = function (ev) {
-      return ev.changedTouches.map(function(t) { return { ev: ev, touch: t }; });
-    }
-
-
-    var starts = window.rxjs.fromEvent(document, 'touchstart')
-        .selectMany(function (ev) { return window.rxjs.fromArray(flattenTouches(ev)); });
-    var moves = document.bindAsObservable("touchmove")
-        .selectMany(function (ev) { return window.rxjs.fromArray(flattenTouches(ev)); })
-        .publish().refCount(); // to prevent multiple subscriptions
-    var ends = document.bindAsObservable("touchend")
-        .selectMany(function (ev) { return window.rxjs.fromArray(flattenTouches(ev)); })
-        .publish().refCount(); // to prevent multiple subscriptions
-    
-    var moveOrEnds = window.rxjs.mergeObservable(moves, ends);
-    var timer = window.rxjs.timer(1500);
-    
-    var longpresses = starts
-        .selectMany(function (start) {
-            var thisPointerMovesOrEnds = movesOrEnds.where(function(t) {
-                return t.touch.identifier === start.touch.identifier;
-            });
-            return timer
-                .takeUntil(thisPointerMovesOrEnds)
-                .select(start);
-        });
-    
-    longpresses.subscribe(function (t) {
-      //console.log("longpress", t.touch.pageX, t.touch.pageY, t.touch.identifier);
-      const textnode = document.createElement("p")
-      textnode.appendChild(document.createTextNode(`t=${t.touches}: ${t.touch.pageX}, ${t.touch.pageY}`))
-      let consoleElement = document.getElementById("console")
-      consoleElement.appendChild(textnode)
-      consoleElement.appendChild()
-      consoleElement.insertBefore(document.createElement("br"), consoleElement.children[0])
-      consoleElement.insertBefore(textnode, consoleElement.children[0])
-    });*/
   }
 })
