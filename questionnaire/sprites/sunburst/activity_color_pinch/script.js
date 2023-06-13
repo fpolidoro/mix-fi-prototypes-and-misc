@@ -256,19 +256,9 @@ Promise.all(
         window.rxjs.take(5)
       ))
     ).subscribe(([[clicks, i], lPosY]) => {
-      let pos
-
-      if(clicks > 1){
-        if(Math.abs(lPosY) === MID){
-          pos = lPosY-MIN_1*i
-          console.warn(`Double click`)
-        }
-      }else{
-        pos = lPosY+MIN_1*i
-        console.log(`Single click`)
-      }
-
-      if(clicks === 1 || (clicks > 1 && Math.abs(lPosY) === MID)){
+      if(clicks > 1 && Math.abs(lPosY) === MID){
+        let pos = lPosY-MIN_1*i
+        console.warn(`Double click`)
         el.style.backgroundPositionY = `-${pos}px`
         if(i === 4){
           console.info(`updating lastPosY$ with ${pos}`)
@@ -277,114 +267,8 @@ Promise.all(
       }
     });
 
-
-    var eventMap = new Map()
-    /*var mousemove = window.rxjs.zip(
-      window.rxjs.fromEvent(document, 'mousemove').pipe(
-        window.rxjs.tap(() => console.log(`mousemove`)),
-        window.rxjs.map((e) => { e.preventDefault(); return e; })),
-      window.rxjs.fromEvent(document, 'touchmove')).pipe(
-        window.rxjs.tap((e) => {
-          console.log(`touchmove, touches: ${e.touches?.length ?? 0}`)
-        }),
-        window.rxjs.map((e) => e.touches !== undefined ? e.touches : {0: e, length: 1})
-    )
-    var mouseup = window.rxjs.merge(
-      window.rxjs.fromEvent(document, 'mouseup'),
-      window.rxjs.fromEvent(document, 'touchend')
-    )
-    var mousedown = window.rxjs.merge(
-      window.rxjs.fromEvent(document, 'mousedown').pipe(
-        window.rxjs.tap(() => console.log(`mousedown`))
-      ),
-      window.rxjs.fromEvent(document, 'touchstart').pipe(
-        window.rxjs.tap(() => console.log(`touchstart`)),
-        window.rxjs.map((e) => {
-          //console.log(e)
-          
-          var rect = e.target.getBoundingClientRect();
-          //e.offsetX = e.touches[0].pageX - rect.left;
-          //e.offsetY = e.touches[0].pageY - rect.top;
-          return {
-            touches: e.touches,
-            rect: rect
-          }
-        })
-      )
-    ).pipe(
-      window.rxjs.mergeMap((start) => {
-        return mousemove.pipe(
-          window.rxjs.tap(mm => console.log(mm)),
-          window.rxjs.map(mm => {
-            for(let k in Object.keys(mm)){
-              console.log(start.touches)
-              if(!isNaN(k)){
-                //console.log(mm[k])
-                eventMap.set(mm[k].identifier, {
-                  left: mm[k].clientX - (//start.touches[k].pageX - start.rect.left),
-                  top: mm[k].clientY - (//start.touches[k].pageY - //start.rect.top),
-                  endX: mm[k].clientX,
-                  endY: mm[k].clientY,
-                })
-              }
-            }
-
-            return {
-              events: eventMap,
-              touches: mm.length
-            }
-          }),
-          window.rxjs.takeUntil(mouseup.pipe(
-            window.rxjs.tap((mmend) => {
-              console.log(`touchup`)
-              console.log(mmend)
-              //eventMap.delete(mmend.touches)
-              if(mmend.touches !== undefined){
-                console.log(Object.keys(mmend.touches))
-                for(let k in Object.keys(mmend.touches)){
-                  if(!isNaN(k)){
-                    console.log(mmend.touches[k])
-                    eventMap.delete(mmend.touches[k].identifier)
-                    console.log(`removing ${mmend.touches[k].identifier}`)
-                  }
-                }
-                if(mmend.touches.length === 0 && eventMap.size > 0){
-                  eventMap.clear()
-                }
-              }else{
-                eventMap.clear()
-              }
-
-              console.log(eventMap)
-            })
-          ))
-        )
-      })
-    ).subscribe(pos => {
-      console.log(pos)
-      //console.log(`pos top: ${pos.top}`)
-      //console.log(`pos left: ${pos.left}`)
-      let text = `t=${pos.touches}:`
-      eventMap.forEach((v, k) => text += ` [${k}](${v.endX}, ${v.endY})`)
-      const textnode = document.createElement("p")
-      textnode.appendChild(document.createTextNode(text))
-      let consoleElement = document.getElementById("console")
-      //consoleElement.appendChild(textnode)
-      //consoleElement.appendChild()
-      //consoleElement.insertBefore(document.createElement("br"), consoleElement.children[0])
-      consoleElement.insertBefore(textnode, consoleElement.children[0])
-
-      var rect = ia1.getBoundingClientRect();
-      var r = Math.abs(rect.top-rect.bottom)/2
-      var cx = rect.left + Math.abs(rect.left-rect.right)/2
-      var cy = rect.top + r
-      //onsole.log(`rect: t=${rect.top}, l=${rect.left}, b=${rect.bottom}, r=${rect.right}`)
-      //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
-
-      var dist = (pos.endX - cx) * (pos.endX - cx) + (pos.endY - cy) * (pos.endY - cy)
-      console.warn(`end is ${dist < r*r ? 'within' : 'outside'} circle`)
-    })*/
-
+    let animatePinch$ = new window.rxjs.Subject()
+    let semaphoreEnd$ = new window.rxjs.Subject()
     window.rxjs.zip(
       window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
         window.rxjs.take(1),
@@ -405,50 +289,84 @@ Promise.all(
         console.log(`touchDown`)
         return window.rxjs.fromEvent(el, 'touchmove').pipe(
           //window.rxjs.tap(mm => console.log(mm)),
+          window.rxjs.filter(mm => mm.touches.length > 1),
           window.rxjs.map(mm => {
+            console.log(mm.touches.length)
             let currentDist = Math.hypot(mm.touches[0].clientX-mm.touches[1].clientX, mm.touches[0].clientY-mm.touches[1].clientY)
+
             return {
               distance: {
                 current: currentDist,
                 start: startDist,
               },
-              touches: mm.touches
+              touches: mm.touches,
             }
           }),
-          //window.rxjs.tap(mm => {})
+          window.rxjs.tap(mm => {
+            if(mm.distance.current < mm.distance.start){
+              console.warn(`Pinch IN`)
+              let mid = {
+                x: (mm.touches[0].clientX+mm.touches[1].clientX)/2,
+                y: (mm.touches[0].clientY+mm.touches[1].clientY)/2
+              }
+        
+              var rect = ia1.getBoundingClientRect();
+              var r = Math.abs(rect.top-rect.bottom)/2
+              var cx = rect.left + Math.abs(rect.left-rect.right)/2
+              var cy = rect.top + r
+              //console.log(`rect: t=${rect.top}, l=${rect.left}, b=${rect.bottom}, r=${rect.right}`)
+              //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
+        
+              var dist = (mid.x - cx) * (mid.x - cx) + (mid.y - cy) * (mid.y - cy)
+              /*if(dist < r*r){
+                console.warn(`end is within circle`)
+              }else{
+                console.log(`end is outside circle`)
+              }*/
+              
+            }else{
+              console.info(`Pinch OUT`)
+            }
+
+            animatePinch$.next({
+              pinch: mm.distance.current < mm.distance.start ? 'in' : 'out',
+              target: dist < r*r
+            })
+          }),
           window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
             window.rxjs.filter(end => end.touches.length < 2),  //stop when there are less than two fingers touching the screen
-            window.rxjs.tap(() => console.info(`touchEnd`))
-          ))
+            window.rxjs.tap(() => console.info(`touchEnd`)),
+            window.rxjs.tap(() => semaphoreEnd$.next())
+          )),
         )
       }),
       window.rxjs.repeat()  //restart from zip after processing this multi-touch
-    ).subscribe(move => {
-      //console.log(move)
+    ).subscribe()
+  
+    semaphoreEnd$.pipe(
+      window.rxjs.withLatestFrom(animatePinch$),
+      window.rxjs.filter(([_, mm]) => mm.pinch === 'in' && mm.target),
+      window.rxjs.exhaustMap((clicks) => window.rxjs.interval(100).pipe(
+        window.rxjs.map((i) => [clicks, i]),
+        window.rxjs.withLatestFrom(lastPosY$.pipe(
+          window.rxjs.map((lpY => {
+            //console.log(`${lpY}`)
+            return lpY%MAX_1
+          }))
+        )),
+        window.rxjs.takeWhile(([[clicks, i], lpY]) => {
+          return lpY !== 0
+        }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
+        window.rxjs.take(5)
+      )),
+      window.rxjs.repeat()
+    ).subscribe(([[_, i], lPosY]) => {
+      let pos = lPosY+MIN_1*i
 
-      if(move.distance.current < move.distance.start){
-        console.warn(`Pinch IN`)
-        let mid = {
-          x: (move.touches[0].clientX+move.touches[1].clientX)/2,
-          y: (move.touches[0].clientY+move.touches[1].clientY)/2
-        }
-  
-        var rect = ia1.getBoundingClientRect();
-        var r = Math.abs(rect.top-rect.bottom)/2
-        var cx = rect.left + Math.abs(rect.left-rect.right)/2
-        var cy = rect.top + r
-        //console.log(`rect: t=${rect.top}, l=${rect.left}, b=${rect.bottom}, r=${rect.right}`)
-        //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
-  
-        var dist = (mid.x - cx) * (mid.x - cx) + (mid.y - cy) * (mid.y - cy)
-        if(dist < r*r){
-          console.warn(`end is within circle`)
-        }else{
-          console.log(`end is outside circle`)
-        }
-        
-      }else{
-        console.info(`Pinch OUT`)
+      el.style.backgroundPositionY = `-${pos}px`
+      if(i === 4){
+        console.info(`updating lastPosY$ with ${pos}`)
+        lastPosY$.next(pos)
       }
     })
   }
