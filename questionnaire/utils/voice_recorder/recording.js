@@ -3,8 +3,8 @@
 //none
 
 //View
-var microphoneButton = document.getElementsByClassName("start-recording-button")[0];
-var recordingControlButtonsContainer = document.getElementsByClassName("recording-contorl-buttons-container")[0];
+var micButton = document.getElementsByClassName("start-recording-button")[0];
+var recordingControlButtonsContainer = document.getElementsByClassName("recording-control-buttons-container")[0];
 var stopRecordingButton = document.getElementsByClassName("stop-recording-button")[0];
 var cancelRecordingButton = document.getElementsByClassName("cancel-recording-button")[0];
 var elapsedTimeTag = document.getElementsByClassName("elapsed-time")[0];
@@ -18,7 +18,7 @@ var textIndicatorOfAudiPlaying = document.getElementsByClassName("text-indicatio
 //Listeners
 
 //Listen to start recording button
-microphoneButton.onclick = startAudioRecording;
+micButton.onclick = startAudioRecording;
 
 //Listen to stop recording button
 stopRecordingButton.onclick = stopAudioRecording;
@@ -35,7 +35,7 @@ audioElement.onended = hideTextIndicatorOfAudioPlaying;
 /** Displays recording control buttons */
 function handleDisplayingRecordingControlButtons() {
     //Hide the microphone button that starts audio recording
-    microphoneButton.style.display = "none";
+    micButton.style.display = "none";
 
     //Display the recording control buttons
     recordingControlButtonsContainer.classList.remove("hide");
@@ -47,7 +47,7 @@ function handleDisplayingRecordingControlButtons() {
 /** Hide the displayed recording control buttons */
 function handleHidingRecordingControlButtons() {
     //Display the microphone button that starts audio recording
-    microphoneButton.style.display = "block";
+    micButton.style.display = "block";
 
     //Hide the recording control buttons
     recordingControlButtonsContainer.classList.add("hide");

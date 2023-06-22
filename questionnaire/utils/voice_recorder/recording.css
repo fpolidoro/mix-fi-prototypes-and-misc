@@ -45,7 +45,23 @@
     .start-recording-button:hover {
         opacity: 1;
     }
-    .recording-contorl-buttons-container {
+
+    button#start-recording-button {
+        color:#435f7a;
+        cursor: pointer;
+        opacity: .5;
+        border: none;
+        border-radius: 50%;
+        padding: 16px;
+        text-align: center;
+        text-decoration: none;
+        /* background-color: transparent; */
+    }
+    #start-recording-button span {
+        font-size: 48px;
+    }
+
+    .recording-control-buttons-container {
         /*targeting Chrome & Safari*/
         display: -webkit-flex;
         /*targeting IE10*/
@@ -152,7 +168,7 @@
     .elapsed-time {
         font-size: 32px;
     }
-    .recording-contorl-buttons-container.hide {
+    .recording-control-buttons-container.hide {
         display: none;
     }
     .overlay {

@@ -5,14 +5,17 @@
     <meta charset="utf-8">
     <title>Audio Recording API Demo</title>
     <link rel="stylesheet" href="recording.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 </head>
 
 <body>
     <div class="audio-recording-container">
         <h1 class="title">Audio Recording API Demo</h1>
-        <i class="start-recording-button fa fa-microphone" aria-hidden="true"></i>
-        <div class="recording-contorl-buttons-container hide">
+        <button id="start-recording-button">
+            <span class="material-icons">mic</span>
+        </button>
+        <div class="recording-control-buttons-container hide">
             <i class="cancel-recording-button fa fa-times-circle-o" aria-hidden="true"></i>
             <div class="recording-elapsed-time">
                 <i class="red-recording-dot fa fa-circle" aria-hidden="true"></i>
@@ -34,7 +37,7 @@
     <audio controls class="audio-element hide">
     </audio>
 
-    <script src="recording.js"></script>
+    <script src="recording_.js"></script>
 </body>
 
 </html>
