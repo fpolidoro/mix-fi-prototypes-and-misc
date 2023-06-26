@@ -47,6 +47,8 @@
     }
 
     button#start-recording-button {
+        max-height: 80px;
+        max-width: 80px;
         color:#435f7a;
         cursor: pointer;
         opacity: .5;
@@ -102,7 +104,9 @@
         /*horizontal centering*/
         align-items: center;
     }
-    .red-recording-dot {
+    #red-recording-dot {
+        height: 16px;
+        width: 16px;
         font-size: 25px;
         color: red;
         margin-right: 12px;
@@ -119,6 +123,10 @@
         -webkit-animation-iteration-count: infinite;
         -moz-animation-iteration-count: infinite;
         -o-animation-iteration-count: infinite;
+    }
+    #red-recording-dot.recording {
+        background-color: red;
+        border-radius: 50%;
     }
     /* The animation code */
     @keyframes flashing-recording-dot {

@@ -1,6 +1,11 @@
 var micButton = document.getElementById("start-recording-button")
 var elapsedTimeTag = document.getElementsByClassName("elapsed-time")[0]
 var recordingControlButtonsContainer = document.getElementsByClassName("recording-control-buttons-container")[0]
+var recordingDot = document.getElementById("red-recording-dot")
+
+var audioElement = document.getElementsByClassName("audio-element")[0];
+var audioElementSource = document.getElementsByClassName("audio-element")[0]
+    .getElementsByTagName("source")[0];
 
 let script = document.createElement('script')
 script.setAttribute('src', 'https://unpkg.com/rxjs@7.5.5/dist/bundles/rxjs.umd.js')
@@ -64,6 +69,7 @@ script.onload = () => {
 			window.rxjs.tap(() => {
 				//store the recording start time to display the elapsed time according to it
 				elapsedTimeTag.innerHTML = "00:00";
+				recordingDot.classList.add("recording")
 				//Display the recording control buttons
 				recordingControlButtonsContainer.classList.remove("hide")
 			}),
@@ -102,10 +108,14 @@ script.onload = () => {
 										default:
 												console.log("An error occured with the error name " + promise.name);
 									}
+								}else{
+									console.log(promise)
+									playAudio(promise)
 								}
 								return canContinue
 							}),
-							window.rxjs.tap(() => console.log(`done`))
+							window.rxjs.tap(() => console.log(`done`)),
+							window.rxjs.tap(() => recordingDot.classList.remove("recording"))
 						))
 					)
 				)
@@ -155,6 +165,56 @@ function computeElapsedTime(timeDiff) {
 	}
 }
 
+/** Plays recorded audio using the audio element in the HTML document
+ * @param {Blob} recorderAudioAsBlob - recorded audio as a Blob Object 
+*/
+function playAudio(recorderAudioAsBlob) {
+
+    //read content of files (Blobs) asynchronously
+    let reader = new FileReader();
+
+    //once content has been read
+    reader.onload = (e) => {
+        //store the base64 URL that represents the URL of the recording audio
+        let base64URL = e.target.result;
+
+        //If this is the first audio playing, create a source element
+        //as pre populating the HTML with a source of empty src causes error
+        if (!audioElementSource) //if its not defined create it (happens first time only)
+            createSourceForAudioElement();
+
+        //set the audio element's source using the base64 URL
+        audioElementSource.src = base64URL;
+        console.log(base64URL)
+
+        //set the type of the audio element based on the recorded audio's Blob type
+        let BlobType = recorderAudioAsBlob.type.includes(";") ?
+            recorderAudioAsBlob.type.substr(0, recorderAudioAsBlob.type.indexOf(';')) : recorderAudioAsBlob.type;
+        audioElementSource.type = BlobType
+
+        //call the load method as it is used to update the audio element after changing the source or other settings
+        audioElement.load();
+
+        //play the audio after successfully setting new src and type that corresponds to the recorded audio
+        console.log("Playing audio...");
+        audioElement.play();
+
+        //Display text indicator of having the audio play in the background
+        displayTextIndicatorOfAudioPlaying();
+    };
+
+    //read content and convert it to a URL (base64)
+    reader.readAsDataURL(recorderAudioAsBlob);
+}
+
+/** Creates a source element for the the audio element in the HTML document*/
+function createSourceForAudioElement() {
+    let sourceElement = document.createElement("source");
+    audioElement.appendChild(sourceElement);
+
+    audioElementSource = sourceElement;
+}
+
 var audioRecorder = {
 	/** Stores the recorded audio as Blob objects of audio data as the recording continues*/
 	audioBlobs: [],/*of type Blob[]*/
@@ -173,7 +233,7 @@ var audioRecorder = {
 			return Promise.reject(new Error('mediaDevices API or getUserMedia method is not supported in this browser.'));
 		}else{
 			//Feature is supported in browser so create an audio stream
-			return navigator.mediaDevices.getUserMedia({ audio: true }/*of type MediaStreamConstraints*/)
+			return navigator.mediaDevices.getUserMedia({ audio: true }/*, initAudio*//*of type MediaStreamConstraints*/)
 				//returns a promise that resolves to the audio stream
 				.then(stream /*of type MediaStream*/ => {
 
@@ -249,4 +309,28 @@ var audioRecorder = {
 		up by the garbage collector as well as any event handlers/listeners associated with it.
 		getEventListeners(audioRecorder.mediaRecorder) will return an empty array of events.*/
 	}
+}
+
+function initAudio(stream) {
+	compressor = context.createDynamicsCompressor();
+	compressor.threshold.value = -50;
+	compressor.knee.value = 40;
+	compressor.ratio.value = 12;
+	compressor.reduction.value = -20;
+	compressor.attack.value = 0;
+	compressor.release.value = 0.25;
+
+	filter = context.createBiquadFilter();
+	filter.Q.value = 8.30;
+	filter.frequency.value = 355;
+	filter.gain.value = 3.0;
+	filter.type = 'bandpass';
+	filter.connect(compressor);
+
+
+	compressor.connect(context.destination)
+	filter.connect(context.destination)
+
+	mediaStreamSource = context.createMediaStreamSource( stream );
+	mediaStreamSource.connect( filter );
 }

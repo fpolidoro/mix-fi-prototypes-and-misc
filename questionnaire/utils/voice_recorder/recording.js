@@ -216,6 +216,7 @@ function playAudio(recorderAudioAsBlob) {
 
         //set the audio element's source using the base64 URL
         audioElementSource.src = base64URL;
+        console.log(base64URL)
 
         //set the type of the audio element based on the recorded audio's Blob type
         let BlobType = recorderAudioAsBlob.type.includes(";") ?
