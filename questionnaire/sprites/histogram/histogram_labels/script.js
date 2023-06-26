@@ -48,10 +48,12 @@ Promise.all(
 
     let animatePinch$ = new window.rxjs.Subject()
     let semaphoreEnd$ = new window.rxjs.Subject()
+    let semaphoreTimer$ = new window.rxjs.Subject()
     window.rxjs.zip(
       window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
         window.rxjs.take(1),
-        window.rxjs.tap(() => console.log(`touchStart #1`))
+        window.rxjs.tap(() => console.log(`touchStart #1`)),
+        window.rxjs.tap(() => semaphoreTimer$.next(true))
       ),
       window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for second touch: fire only if touches are more than 1
         window.rxjs.filter(ev => ev.touches.length > 1),
@@ -160,5 +162,27 @@ Promise.all(
         lastPosY$.next(pos)
       }
     })
+
+    /** Observe the user's gestures: after the first touch, start a race between the pinch completion and a timer.
+     * The winner determines whether any help should be provided to the user
+     */
+    semaphoreTimer$.pipe(
+      window.rxjs.tap(() => console.log(`Starting race`)),
+      window.rxjs.switchMap(() => window.rxjs.race(
+        window.rxjs.timer(90000).pipe(
+          window.rxjs.map(() => false)
+        ),
+        semaphoreEnd$.pipe(
+          window.rxjs.map(() => true)
+        )
+      )),
+      window.rxjs.tap((result) => {
+        if(result){
+          console.log(`gesture performed`)
+        }else{
+          console.error(`HAVING ISSUES?`)
+        }
+      })
+    ).subscribe()
   }
 })
