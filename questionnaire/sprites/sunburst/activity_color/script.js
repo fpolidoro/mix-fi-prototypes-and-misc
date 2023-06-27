@@ -119,41 +119,12 @@ document.body.appendChild(script)
 script.onload = () => {
   // script has loaded, you can now use it safely
   console.warn('thank me later')
-  // ... do something with the newly loaded script
-  
-  /*const source = window.rxjs.interval(1000);
-  //sample last emitted value from source every 2s
-  const example = window.rxjs.interval(2000);
-  //output: 2..4..6..8..
-  const subscribe = example.subscribe((val) => console.log(val));*/
+
   const lastPosY$ = new window.rxjs.BehaviorSubject(0)
+  const ia2Click$ = window.rxjs.fromEvent(ia2, 'click').pipe(window.rxjs.share())
+  
   lastPosY$.subscribe(v => console.log(`lastPosY$ emitted ${v}`))
-
-  /*const ia1Click$ = window.rxjs.fromEvent(ia1, 'click');
-  ia1Click$.pipe(
-    window.rxjs.exhaustMap(() => window.rxjs.interval(100).pipe(
-      window.rxjs.withLatestFrom(lastPosY$.pipe(
-        window.rxjs.map((lpY => {
-          //console.log(`${lpY}`)
-          return lpY%MAX_1
-        }))
-      )),
-      window.rxjs.takeWhile(([i, lpY]) => {
-        //console.info(`ia-1 ${lpY !== 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
-        return lpY !== 0
-      }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
-      window.rxjs.take(5)
-    ))
-  ).subscribe(([i, lPosY]) => {
-    //console.log(`animating IA-1: ${i}, ${lPosY+MIN_1*i}`)
-    el.style.backgroundPositionY = `-${lPosY+MIN_1*i}px`
-    if(i === 4){
-      console.info(`updating lastPosY$ with ${(lPosY+MIN_1*i)%MAX_1}`)
-      lastPosY$.next((lPosY+MIN_1*i)%MAX_1)
-    }
-  })*/
-
-  const ia2Click$ = window.rxjs.fromEvent(ia2, 'click')
+  
   ia2Click$.pipe(
     window.rxjs.exhaustMap(() => window.rxjs.interval(100).pipe(
       window.rxjs.withLatestFrom(lastPosY$.pipe(
@@ -167,7 +138,7 @@ script.onload = () => {
         return lpY === 0
       }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
       window.rxjs.take(5)
-    ))
+    )),
   ).subscribe(([i, lPosY]) => {
     console.log(`animating IA-2: ${i}, ${lPosY+MIN_1*i}`)
     el.style.backgroundPositionY = `-${lPosY+MIN_1*i}px`
@@ -176,32 +147,6 @@ script.onload = () => {
       lastPosY$.next((lPosY+MIN_1*i)%MAX_1)
     }
   })
-
-  
-
-  /*const ia1Zoom$ = window.rxjs.fromEvent(ia1, 'dblclick')
-  ia1Zoom$.pipe(
-    window.rxjs.exhaustMap(() => window.rxjs.interval(100).pipe(
-      window.rxjs.withLatestFrom(lastPosY$.pipe(
-        window.rxjs.map((lpY => {
-          console.log(`${lpY}`)
-          return lpY%MAX_1
-        }))
-      )),
-      window.rxjs.takeWhile(([i, lpY]) => {
-        console.info(`ia-3 ${Math.abs(lpY) === MID ? 'enabled' : 'disabled'} because lpY=${lpY}`)
-        return Math.abs(lpY) === MID
-      }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
-      window.rxjs.take(5)
-    ))
-  ).subscribe(([i, lPosY]) => {
-    console.log(`animating IA-3: ${i}, ${lPosY-MIN_1*i}`)
-    el.style.backgroundPositionY = `-${lPosY-MIN_1*i}px`
-    if(i === 4){
-      console.info(`updating lastPosY$ with ${(lPosY-MIN_1*i)%MAX_1}`)
-      lastPosY$.next((lPosY-MIN_1*i)%MAX_1)
-    }
-  })*/
 
   // How fast does the user has to click
   // so that it counts as double click
@@ -235,47 +180,94 @@ script.onload = () => {
     window.rxjs.repeat(),
   );
 
-  // Now we can buffer the original click stream until our
-  // buffer gate triggers.
-  leftClick$.pipe(
-    window.rxjs.buffer(bufferGate$),
-    // Here we map the buffered events into the length of the buffer
-    // If the user clicked once, the buffer is 1. If he clicked twice it is 2
-    window.rxjs.map(clicks => clicks.length),
-    window.rxjs.tap((clicks) => console.log(`clicks: ${clicks}`)),
-    window.rxjs.exhaustMap((clicks) => window.rxjs.interval(100).pipe(
-      window.rxjs.map((i) => [clicks, i]),
-      window.rxjs.withLatestFrom(lastPosY$.pipe(
-        window.rxjs.map((lpY => {
-          //console.log(`${lpY}`)
-          return lpY%MAX_1
-        }))
-      )),
-      window.rxjs.takeWhile(([[clicks, i], lpY]) => {
-        //console.info(`ia-1 ${lpY !== 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
-        return lpY !== 0
-      }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
-      window.rxjs.take(5)
-    ))
-  ).subscribe(([[clicks, i], lPosY]) => {
-    let pos
-
-    if(clicks > 1){
-      if(Math.abs(lPosY) === MID){
-        pos = lPosY-MIN_1*i
-        console.warn(`Double click`)
-      }
+  window.rxjs.race(
+    window.rxjs.timer(30000).pipe(
+      window.rxjs.map(() => false)
+    ),
+    window.rxjs.merge(
+      ia2Click$.pipe(
+        window.rxjs.tap(() => console.log(`ia2Click`)),
+        //window.rxjs.take(1),
+        window.rxjs.switchMap(() => window.rxjs.race(
+          window.rxjs.timer(30000).pipe(
+            window.rxjs.map(() => false)
+          ),
+        ))
+      ),
+      leftClick$.pipe(
+        window.rxjs.tap(() => console.log(`leftClick`)),
+        window.rxjs.buffer(bufferGate$),
+        // Here we map the buffered events into the length of the buffer
+        // If the user clicked once, the buffer is 1. If he clicked twice it is 2
+        window.rxjs.map(clicks => clicks.length),
+        window.rxjs.tap((clicks) => console.log(`clicks: ${clicks}`)),
+        window.rxjs.exhaustMap((clicks) => window.rxjs.interval(100).pipe(
+          window.rxjs.map((i) => [clicks, i]),
+          window.rxjs.withLatestFrom(lastPosY$.pipe(
+            window.rxjs.map((lpY => {
+              //console.log(`${lpY}`)
+              return lpY%MAX_1
+            }))
+          )),
+          window.rxjs.takeWhile(([[clicks, i], lpY]) => {
+            //console.info(`ia-1 ${lpY !== 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
+            return lpY !== 0
+          }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
+          window.rxjs.take(5)
+        )),
+        window.rxjs.tap(([[clicks, i], lPosY]) => {
+          let pos
+      
+          if(clicks > 1){
+            if(Math.abs(lPosY) === MID){
+              pos = lPosY-MIN_1*i
+              console.warn(`Double click`)
+            }
+          }else{
+            pos = lPosY+MIN_1*i
+            console.log(`Single click`)
+          }
+      
+          if(clicks === 1 || (clicks > 1 && Math.abs(lPosY) === MID)){
+            el.style.backgroundPositionY = `-${pos}px`
+            if(i === 4){
+              console.info(`updating lastPosY$ with ${pos}`)
+              lastPosY$.next(pos)
+            }
+          }
+        }),
+        window.rxjs.map(() => true)
+      )
+    )
+  ).pipe(
+    window.rxjs.repeat()
+  ).subscribe((result) => {
+    if(result){
+      console.log(`gesture performed`)
     }else{
-      pos = lPosY+MIN_1*i
-      console.log(`Single click`)
+      console.error(`HAVING ISSUES?`)
     }
+  })
 
-    if(clicks === 1 || (clicks > 1 && Math.abs(lPosY) === MID)){
-      el.style.backgroundPositionY = `-${pos}px`
-      if(i === 4){
-        console.info(`updating lastPosY$ with ${pos}`)
-        lastPosY$.next(pos)
+  /** Observe the user's gestures: after the first touch, start a race between the pinch completion and a timer.
+    * The winner determines whether any help should be provided to the user
+  */
+  /*semaphoreTimer$.pipe(
+    window.rxjs.tap(() => console.log(`Starting race`)),
+    window.rxjs.switchMap(() => window.rxjs.race(
+      window.rxjs.timer(90000).pipe(
+        window.rxjs.map(() => false)
+      ),
+      leftClick$.pipe(
+        window.rxjs.map(() => true)
+      )
+    )),
+    window.rxjs.tap((result) => {
+      if(result){
+        console.log(`gesture performed`)
+      }else{
+        console.error(`HAVING ISSUES?`)
       }
-    }
-  });
+    })
+  ).subscribe()*/
 }
