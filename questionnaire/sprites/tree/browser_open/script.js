@@ -62,7 +62,7 @@ Promise.all(
         window.rxjs.withLatestFrom(lastPosX$.pipe(
           window.rxjs.map((lpY => {
             console.log(`${lpY}`)
-            return lpY%MAX_1
+            return lpY/*%MAX_1*/
           }))
         )),
         window.rxjs.takeWhile(([i, lpY]) => {
@@ -75,10 +75,10 @@ Promise.all(
       console.log(`animating IA-2: ${i}, ${lPosY+MIN_1*i}`)
       el.style.backgroundPositionX = `-${lPosY+MIN_1*i}px`
       if(i === 4){
-        console.info(`updating lastPosY$ with ${(lPosY+MIN_1*i)%MAX_1}`)
+        console.info(`updating lastPosY$ with ${(lPosY+MIN_1*i)/*%MAX_1*/}`)
         i1.classList.remove("fa-minus")
         i1.classList.add("fa-check")
-        lastPosX$.next((lPosY+MIN_1*i)%MAX_1)
+        lastPosX$.next((lPosY+MIN_1*i)/*%MAX_1*/)
       }
     })
 
@@ -200,11 +200,11 @@ Promise.all(
               //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
         
               var dist = (mid.x - cx) * (mid.x - cx) + (mid.y - cy) * (mid.y - cy)
-              /*if(dist < r*r){
+              if(dist < r*r){
                 console.warn(`end is within circle`)
               }else{
                 console.log(`end is outside circle`)
-              }*/
+              }
               
             }else{
               console.info(`Pinch OUT`)
@@ -232,8 +232,8 @@ Promise.all(
         window.rxjs.map((i) => [clicks, i]),
         window.rxjs.withLatestFrom(lastPosX$.pipe(
           window.rxjs.map((lpY => {
-            //console.log(`${lpY}`)
-            return lpY%MAX_1
+            console.log(`${lpY}`)
+            return lpY//%MAX_1
           }))
         )),
         window.rxjs.takeWhile(([[clicks, i], lpY]) => {
@@ -247,8 +247,8 @@ Promise.all(
 
       el.style.backgroundPositionX = `-${pos}px`
       if(i === 4){
-        i3.classList.remove("fa-minus")
-        i3.classList.add("fa-check")
+        i2.classList.remove("fa-minus")
+        i2.classList.add("fa-check")
         console.info(`updating lastPosY$ with ${pos}`)
         lastPosX$.next(pos)
       }
