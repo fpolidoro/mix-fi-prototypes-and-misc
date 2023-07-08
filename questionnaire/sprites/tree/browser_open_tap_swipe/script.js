@@ -152,6 +152,7 @@ Promise.all(
     const THRESHOLD = 10
     let animatePinch$ = new window.rxjs.Subject()
     let passThreshold$ = new window.rxjs.Subject()
+    let startInterval$ = new window.rxjs.Subject()
     window.rxjs.zip(
       window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
         window.rxjs.take(1),
@@ -227,9 +228,10 @@ Promise.all(
     ).subscribe()
 
     window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
+      window.rxjs.tap((e) => console.log(e)),
       window.rxjs.tap(() => console.log(`start`)),
       window.rxjs.take(1),
-      window.rxjs.tap(() => console.log(`touchStart #1`)),
+      window.rxjs.tap(() => startInterval$.next(Date.now())),
       window.rxjs.switchMap((start) => window.rxjs.fromEvent(el, 'touchmove').pipe(
         window.rxjs.tap((move) => {
           /*console.log(start)
@@ -237,21 +239,39 @@ Promise.all(
           let currentDist = Math.hypot(start.touches[0].clientX-move.touches[0].clientX, start.touches[0].clientY-move.touches[0].clientY)
           passThreshold$.next(currentDist)
         }),
-        window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
+        window.rxjs.takeUntil(
+          window.rxjs.race(
+            window.rxjs.fromEvent(el, 'touchend'),
+            window.rxjs.fromEvent(el, 'touchcancel')
+          ).pipe(
           window.rxjs.tap(() => console.log(`stop`)),
-          window.rxjs.tap(() => passThreshold$.next(null))
+          window.rxjs.tap(() => {
+            passThreshold$.next(null)
+            startInterval$.next(null)
+          })
         ))
       )),
       window.rxjs.repeat()
     ).subscribe()
 
-    passThreshold$.pipe(
+    passThreshold$.asObservable().pipe(
       window.rxjs.tap((v) => console.log(v)),
-      window.rxjs.filter((val) => val > THRESHOLD),
+      window.rxjs.takeWhile(v => v !== null, false),
+      window.rxjs.tap(v => console.log(v)),
       window.rxjs.timeInterval(),
-      window.rxjs.takeWhile(v => v.value !== null),
-      window.rxjs.repeat()
-    ).subscribe(t => console.log(t))
+      //window.rxjs.take(2),
+      window.rxjs.repeat(),
+      //window.rxjs.skip(1),//((swipe) => swipe.interval < 100),
+      window.rxjs.scan((acc, curr) => {
+        //console.log(acc)
+        //console.log(curr)
+
+        return Object.assign({}, { value: curr.value, interval: (acc.interval ?? 0) + curr.interval })
+      }),
+    ).subscribe({
+      next: t => console.log(t),
+      complete: () => console.warn(`pass completed`) 
+    })
   
     /*passThreshold$.pipe(
       
