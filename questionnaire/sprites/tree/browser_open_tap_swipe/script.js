@@ -228,31 +228,30 @@ Promise.all(
     ).subscribe()
 
     window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
-      window.rxjs.tap((e) => console.log(e)),
       window.rxjs.tap(() => console.log(`start`)),
       window.rxjs.take(1),
-      window.rxjs.tap(() => startInterval$.next(Date.now())),
-      window.rxjs.switchMap((start) => window.rxjs.fromEvent(el, 'touchmove').pipe(
-        window.rxjs.tap((move) => {
-          /*console.log(start)
-          console.log(move)*/
-          let currentDist = Math.hypot(start.touches[0].clientX-move.touches[0].clientX, start.touches[0].clientY-move.touches[0].clientY)
-          passThreshold$.next(currentDist)
-        }),
-        window.rxjs.takeUntil(
-          window.rxjs.race(
-            window.rxjs.fromEvent(el, 'touchend'),
-            window.rxjs.fromEvent(el, 'touchcancel')
-          ).pipe(
-          window.rxjs.tap(() => console.log(`stop`)),
-          window.rxjs.tap(() => {
-            passThreshold$.next(null)
-            startInterval$.next(null)
-          })
-        ))
-      )),
-      window.rxjs.repeat()
-    ).subscribe()
+      window.rxjs.switchMap((start) => window.rxjs.merge(
+        window.rxjs.fromEvent(el, 'touchmove').pipe(
+          window.rxjs.map((tm) => tm.type),
+          window.rxjs.tap(e => console.log(e)),
+        ),
+        window.rxjs.race(
+          window.rxjs.fromEvent(el, 'touchend'),
+          window.rxjs.fromEvent(el, 'touchcancel')
+        ).pipe(
+          window.rxjs.map((te) => te.type),
+          window.rxjs.tap(e => console.log(e))
+        )
+      ).pipe(
+        window.rxjs.bufferTime(100),
+        window.rxjs.takeWhile(b => b.length > 0),
+        window.rxjs.repeat(),
+        window.rxjs.tap(e => console.log(e))
+      )
+    )).subscribe()
+
+    
+
 
     passThreshold$.asObservable().pipe(
       window.rxjs.tap((v) => console.log(v)),
