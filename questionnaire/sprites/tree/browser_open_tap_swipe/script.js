@@ -153,102 +153,146 @@ Promise.all(
     let animatePinch$ = new window.rxjs.Subject()
     let passThreshold$ = new window.rxjs.Subject()
     let startInterval$ = new window.rxjs.Subject()
-    window.rxjs.zip(
-      window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
-        window.rxjs.take(1),
-        window.rxjs.tap(() => console.log(`touchStart #1`))
-      ),
-      window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for second touch: fire only if touches are more than 1
-        window.rxjs.filter(ev => ev.touches.length > 1),
-        window.rxjs.tap(() => console.log(`touchStart #2`)),
-        window.rxjs.take(1)
-      )
-    ).pipe(
-      window.rxjs.mergeMap(([start1, start2]) => {
-        console.log(start1)
-        console.log(start2)
-        let startDist = Math.hypot(start1.changedTouches[0].clientX - start2.changedTouches[0].clientX, start1.changedTouches[0].clientY-start2.changedTouches[0].clientY)
-        console.log(`distance between s1,s2 = ${startDist}`)
+    // window.rxjs.zip(
+    //   window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
+    //     window.rxjs.take(1),
+    //     window.rxjs.tap(() => console.log(`touchStart #1`))
+    //   ),
+    //   window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for second touch: fire only if touches are more than 1
+    //     window.rxjs.filter(ev => ev.touches.length > 1),
+    //     window.rxjs.tap(() => console.log(`touchStart #2`)),
+    //     window.rxjs.take(1)
+    //   )
+    // ).pipe(
+    //   window.rxjs.mergeMap(([start1, start2]) => {
+    //     console.log(start1)
+    //     console.log(start2)
+    //     let startDist = Math.hypot(start1.changedTouches[0].clientX - start2.changedTouches[0].clientX, start1.changedTouches[0].clientY-start2.changedTouches[0].clientY)
+    //     console.log(`distance between s1,s2 = ${startDist}`)
 
-        console.log(`touchDown`)
-        return window.rxjs.fromEvent(el, 'touchmove').pipe(
-          //window.rxjs.tap(mm => console.log(mm)),
-          window.rxjs.filter(mm => mm.touches.length > 1),
-          window.rxjs.map(mm => {
-            console.log(mm.touches.length)
-            let currentDist = Math.hypot(mm.touches[0].clientX-mm.touches[1].clientX, mm.touches[0].clientY-mm.touches[1].clientY)
+    //     console.log(`touchDown`)
+    //     return window.rxjs.fromEvent(el, 'touchmove').pipe(
+    //       //window.rxjs.tap(mm => console.log(mm)),
+    //       window.rxjs.filter(mm => mm.touches.length > 1),
+    //       window.rxjs.map(mm => {
+    //         console.log(mm.touches.length)
+    //         let currentDist = Math.hypot(mm.touches[0].clientX-mm.touches[1].clientX, mm.touches[0].clientY-mm.touches[1].clientY)
 
-            return {
-              distance: {
-                current: currentDist,
-                start: startDist,
-              },
-              touches: mm.touches,
-            }
-          }),
-          window.rxjs.tap(mm => {
-            if(mm.distance.current < mm.distance.start){
-              console.warn(`Pinch IN`)
-              let mid = {
-                x: (mm.touches[0].clientX+mm.touches[1].clientX)/2,
-                y: (mm.touches[0].clientY+mm.touches[1].clientY)/2
-              }
+    //         return {
+    //           distance: {
+    //             current: currentDist,
+    //             start: startDist,
+    //           },
+    //           touches: mm.touches,
+    //         }
+    //       }),
+    //       window.rxjs.tap(mm => {
+    //         if(mm.distance.current < mm.distance.start){
+    //           console.warn(`Pinch IN`)
+    //           let mid = {
+    //             x: (mm.touches[0].clientX+mm.touches[1].clientX)/2,
+    //             y: (mm.touches[0].clientY+mm.touches[1].clientY)/2
+    //           }
         
-              var rect = ia1.getBoundingClientRect();
-              var r = Math.abs(rect.top-rect.bottom)/2
-              var cx = rect.left + Math.abs(rect.left-rect.right)/2
-              var cy = rect.top + r
-              //console.log(`rect: t=${rect.top}, l=${rect.left}, b=${rect.bottom}, r=${rect.right}`)
-              //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
+    //           var rect = ia1.getBoundingClientRect();
+    //           var r = Math.abs(rect.top-rect.bottom)/2
+    //           var cx = rect.left + Math.abs(rect.left-rect.right)/2
+    //           var cy = rect.top + r
+    //           //console.log(`rect: t=${rect.top}, l=${rect.left}, b=${rect.bottom}, r=${rect.right}`)
+    //           //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
         
-              var dist = (mid.x - cx) * (mid.x - cx) + (mid.y - cy) * (mid.y - cy)
-              /*if(dist < r*r){
-                console.warn(`end is within circle`)
-              }else{
-                console.log(`end is outside circle`)
-              }*/
+    //           var dist = (mid.x - cx) * (mid.x - cx) + (mid.y - cy) * (mid.y - cy)
+    //           /*if(dist < r*r){
+    //             console.warn(`end is within circle`)
+    //           }else{
+    //             console.log(`end is outside circle`)
+    //           }*/
               
-            }else{
-              console.info(`Pinch OUT`)
-            }
+    //         }else{
+    //           console.info(`Pinch OUT`)
+    //         }
 
-            animatePinch$.next({
-              pinch: mm.distance.current < mm.distance.start ? 'in' : 'out',
-              target: dist < r*r
-            })
-          }),
-          window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
-            window.rxjs.filter(end => end.touches.length < 2),  //stop when there are less than two fingers touching the screen
-            window.rxjs.tap(() => console.info(`touchEnd`)),
-            window.rxjs.tap(() => passThreshold$.next())
-          )),
-        )
+    //         animatePinch$.next({
+    //           pinch: mm.distance.current < mm.distance.start ? 'in' : 'out',
+    //           target: dist < r*r
+    //         })
+    //       }),
+    //       window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
+    //         window.rxjs.filter(end => end.touches.length < 2),  //stop when there are less than two fingers touching the screen
+    //         window.rxjs.tap(() => console.info(`touchEnd`)),
+    //         window.rxjs.tap(() => passThreshold$.next())
+    //       )),
+    //     )
+    //   }),
+    //   window.rxjs.repeat()  //restart from zip after processing this multi-touch
+    // ).subscribe()
+
+    let elapsed$ = new window.rxjs.ReplaySubject()
+    let fling$ = window.rxjs.fromEvent(el, 'touchstart').pipe(
+      window.rxjs.tap(() => {
+        console.log(`Fling start`)
+        elapsed$.next(null)
       }),
-      window.rxjs.repeat()  //restart from zip after processing this multi-touch
+      window.rxjs.exhaustMap(() => {
+        let startDate = new Date()
+        return window.rxjs.fromEvent(el, 'touchmove').pipe(
+          window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
+            window.rxjs.tap(() => elapsed$.next(new Date().getTime() - startDate.getTime())),
+          )),
+          window.rxjs.withLatestFrom(elapsed$.pipe(
+            window.rxjs.filter((elapsed) => elapsed !== null)
+          )),
+          window.rxjs.filter(([_, elapsed]) => {
+            console.log(`Elapsed: ${elapsed}`)
+            return elapsed < 100
+          }),
+          window.rxjs.tap(() => console.warn(`Fling`))
+        )
+      })
     ).subscribe()
 
-    window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
-      window.rxjs.tap(() => console.log(`start`)),
-      window.rxjs.take(1),
-      window.rxjs.switchMap((start) => window.rxjs.merge(
-        window.rxjs.fromEvent(el, 'touchmove').pipe(
-          window.rxjs.map((tm) => tm.type),
-          window.rxjs.tap(e => console.log(e)),
-        ),
-        window.rxjs.race(
-          window.rxjs.fromEvent(el, 'touchend'),
-          window.rxjs.fromEvent(el, 'touchcancel')
-        ).pipe(
-          window.rxjs.map((te) => te.type),
-          window.rxjs.tap(e => console.log(e))
-        )
-      ).pipe(
-        window.rxjs.bufferTime(100),
-        window.rxjs.takeWhile(b => b.length > 0),
-        window.rxjs.repeat(),
-        window.rxjs.tap(e => console.log(e))
-      )
-    )).subscribe()
+    /*let drag$ = window.rxjs.fromEvent(el, 'touchstart').pipe(
+      window.rxjs.debounceTime(100),
+      window.rxjs.exhaustMap(() => window.rxjs.fromEvent(el, 'touchmove').pipe(
+        window.rxjs.tap(() => console.log(`dragging`)),
+        window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend'))
+      ))
+    )
+
+    window.rxjs.race(
+      fling$,
+      drag$
+    ).subscribe()*/
+
+    // window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
+    //   window.rxjs.tap(() => console.log(`start`)),
+    //   //window.rxjs.take(1),
+    //   window.rxjs.switchMap((start) => window.rxjs.merge(
+    //     window.rxjs.fromEvent(el, 'touchmove').pipe(
+    //       window.rxjs.map((tm) => tm.type),
+    //       window.rxjs.tap(e => console.log(e)),
+    //     ),
+    //     window.rxjs.race(
+    //       window.rxjs.fromEvent(el, 'touchend'),
+    //       window.rxjs.fromEvent(el, 'touchcancel')
+    //     ).pipe(
+    //       window.rxjs.map((te) => te.type),
+    //       window.rxjs.tap(e => console.log(e))
+    //     )
+    //   ).pipe(
+    //     window.rxjs.bufferTime(100),
+    //     window.rxjs.takeWhile(b => b.length > 0),
+    //     window.rxjs.tap(e => console.log(e))
+    //   )),
+    //   window.rxjs.tap(() => console.log(`done with switchMap`)),
+    //   /*window.rxjs.takeUntil(
+    //     window.rxjs.race(
+    //       window.rxjs.fromEvent(el, 'touchend'),
+    //       window.rxjs.fromEvent(el, 'touchcancel')
+    //     )
+    //   ),*/
+    //   window.rxjs.repeat(),
+    // ).subscribe()
 
     
 
