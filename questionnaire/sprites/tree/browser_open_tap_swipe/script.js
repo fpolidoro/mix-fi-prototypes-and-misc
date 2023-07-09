@@ -227,29 +227,35 @@ Promise.all(
     //   window.rxjs.repeat()  //restart from zip after processing this multi-touch
     // ).subscribe()
 
+    /** Observes the elapsed time between a `touchstart` and `touchend` events */
     let elapsed$ = new window.rxjs.ReplaySubject()
-    let fling$ = window.rxjs.fromEvent(el, 'touchstart').pipe(
+    //listen for fling event
+    window.rxjs.fromEvent(el, 'touchstart').pipe(
       window.rxjs.tap(() => {
         console.log(`Fling start`)
-        elapsed$.next(null)
+        elapsed$.next(null) //at touchstart reset the elapsed time
       }),
       window.rxjs.exhaustMap(() => {
-        let startDate = new Date()
-        return window.rxjs.fromEvent(el, 'touchmove').pipe(
-          window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
-            window.rxjs.tap(() => elapsed$.next(new Date().getTime() - startDate.getTime())),
-          )),
-          window.rxjs.withLatestFrom(elapsed$.pipe(
-            window.rxjs.filter((elapsed) => elapsed !== null)
-          )),
-          window.rxjs.filter(([_, elapsed]) => {
-            console.log(`Elapsed: ${elapsed}`)
-            return elapsed < 100
-          }),
-          window.rxjs.tap(() => console.warn(`Fling`))
+        let startDate = new Date()  //take the current time
+        console.log(`Fling exhaust`)
+        return window.rxjs.fromEvent(el, 'touchmove').pipe( //and switch to listen for touchmove events
+          window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe( //until a touchend is detected
+            window.rxjs.tap(() => console.log(`Fling end`)),
+            window.rxjs.tap(() => elapsed$.next(new Date().getTime() - startDate.getTime())), //when touchend emits, take the current time again and push it to elapsed$ observable
+          ))
         )
       })
     ).subscribe()
+
+    elapsed$.pipe(
+      window.rxjs.tap((elapsed) => console.log(`withLatestFrom: ${elapsed}`)),
+      window.rxjs.filter((elapsed) => elapsed !== null),  //ignore the reset values (null)
+      window.rxjs.filter((elapsed) => { //check whether the gesture is a fling or a drag: a fling is a very quick gesture (less than 150ms)
+        console.log(`Elapsed: ${elapsed}`)
+        return elapsed < 150
+      }),
+      window.rxjs.tap(() => console.warn(`Fling`))
+    ).subscribe((elapsed) => console.log(`elapsed value: ${elapsed}`))
 
     /*let drag$ = window.rxjs.fromEvent(el, 'touchstart').pipe(
       window.rxjs.debounceTime(100),
