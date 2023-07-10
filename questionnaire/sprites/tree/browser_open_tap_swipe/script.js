@@ -228,34 +228,56 @@ Promise.all(
     // ).subscribe()
 
     /** Observes the elapsed time between a `touchstart` and `touchend` events */
-    let elapsed$ = new window.rxjs.ReplaySubject()
+    let elapsed$ = new window.rxjs.ReplaySubject(1)
+    let touch$ = new window.rxjs.ReplaySubject(1)
     //listen for fling event
     window.rxjs.fromEvent(el, 'touchstart').pipe(
       window.rxjs.tap(() => {
-        console.log(`Fling start`)
+        //console.log(`Fling start`)
         elapsed$.next(null) //at touchstart reset the elapsed time
+        touch$.next(null) //reset also the touch observable
       }),
-      window.rxjs.exhaustMap(() => {
+      window.rxjs.exhaustMap((start) => {
         let startDate = new Date()  //take the current time
-        console.log(`Fling exhaust`)
+        //console.log(`Fling exhaust`)
         return window.rxjs.fromEvent(el, 'touchmove').pipe( //and switch to listen for touchmove events
           window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe( //until a touchend is detected
-            window.rxjs.tap(() => console.log(`Fling end`)),
-            window.rxjs.tap(() => elapsed$.next(new Date().getTime() - startDate.getTime())), //when touchend emits, take the current time again and push it to elapsed$ observable
+            //window.rxjs.tap(() => console.log(`Fling end`)),
+            window.rxjs.tap((end) => {
+              let elapsed = new Date().getTime() - startDate.getTime()
+              let touch = {
+                duration: elapsed,
+                start: {
+                  x: start.touches[0].clientX,
+                  y: start.touches[0].clientY
+                },
+                end: {
+                  x: end.changedTouches[0].clientX,
+                  y: end.changedTouches[0].clientY
+                },
+                distance: Math.hypot(start.touches[0].clientX - end.changedTouches[0].clientX, start.touches[0].clientY-end.changedTouches[0].clientY)
+              }
+              elapsed$.next(elapsed)
+              touch$.next(touch)
+            }), //when touchend emits, take the current time again and push it to elapsed$ observable
           ))
         )
       })
     ).subscribe()
 
     elapsed$.pipe(
-      window.rxjs.tap((elapsed) => console.log(`withLatestFrom: ${elapsed}`)),
-      window.rxjs.filter((elapsed) => elapsed !== null),  //ignore the reset values (null)
       window.rxjs.filter((elapsed) => { //check whether the gesture is a fling or a drag: a fling is a very quick gesture (less than 150ms)
-        console.log(`Elapsed: ${elapsed}`)
-        return elapsed < 150
+        return elapsed !== null && elapsed < 150
       }),
-      window.rxjs.tap(() => console.warn(`Fling`))
-    ).subscribe((elapsed) => console.log(`elapsed value: ${elapsed}`))
+      window.rxjs.exhaustMap((elapsed) => touch$.pipe(
+        window.rxjs.filter((touch) => touch !== null),
+        window.rxjs.take(1),
+        window.rxjs.map((touch) => ({elapsed: elapsed, distance: touch.distance})),
+        window.rxjs.tap((vals)=> console.log(vals)),
+        window.rxjs.filter((vals) => vals.distance > 10),
+        window.rxjs.tap(() => console.warn(`Fling`))
+      )),
+    ).subscribe()
 
     /*let drag$ = window.rxjs.fromEvent(el, 'touchstart').pipe(
       window.rxjs.debounceTime(100),
