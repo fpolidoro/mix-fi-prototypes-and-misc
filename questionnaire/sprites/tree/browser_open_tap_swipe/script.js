@@ -62,7 +62,7 @@ Promise.all(
         window.rxjs.withLatestFrom(lastPosX$.pipe(
           window.rxjs.map((lpY => {
             console.log(`${lpY}`)
-            return lpY%MAX_1
+            return lpY//%MAX_1
           }))
         )),
         window.rxjs.takeWhile(([i, lpY]) => {
@@ -72,166 +72,22 @@ Promise.all(
         window.rxjs.take(5)
       ))
     ).subscribe(([i, lPosY]) => {
-      console.log(`animating IA-2: ${i}, ${lPosY+MIN_1*i}`)
-      el.style.backgroundPositionX = `-${lPosY+MIN_1*i}px`
+      let pos = lPosY+MIN_1*i
+      console.log(`animating IA-2: ${i}, ${pos}`)
+      el.style.backgroundPositionX = `-${pos}px`
       if(i === 4){
-        console.info(`updating lastPosY$ with ${(lPosY+MIN_1*i)%MAX_1}`)
+        console.info(`updating lastPosY$ with ${pos}`)
         i1.classList.remove("fa-minus")
         i1.classList.add("fa-check")
-        lastPosX$.next((lPosY+MIN_1*i)%MAX_1)
+        lastPosX$.next(pos)
       }
     })
-
-    // How fast does the user has to click
-    // so that it counts as double click
-    const doubleClickDuration = 200;
-
-    // Create a stream out of the mouse click event.
-    const leftClick$ = window.rxjs.fromEvent(ia1, 'click')
-    // We are only interested in left clicks, so we filter the result down
-    .pipe(window.rxjs.filter((event) => event.button === 0));
-
-  // We have two things to consider in order to detect single or
-  // or double clicks.
-
-    // 1. We debounce the event. The event will only be forwared 
-    // once enough time has passed to be sure we only have a single click
-    const debounce$ = leftClick$.pipe(window.rxjs.debounceTime(doubleClickDuration));
-
-    // 2. We also want to abort once two clicks have come in.
-    const clickLimit$ = leftClick$.pipe(
-      window.rxjs.bufferCount(2),
-    );
-
-    // Now we combine those two. The gate will emit once we have 
-    // either waited enough to be sure its a single click or
-    // two clicks have passed throug
-    const bufferGate$ = window.rxjs.race(debounce$, clickLimit$).pipe(
-      // We are only interested in the first event. After that
-      // we want to restart.
-      window.rxjs.first(),
-      window.rxjs.repeat(),
-    );
-
-    // Now we can buffer the original click stream until our
-    // buffer gate triggers.
-    leftClick$.pipe(
-      window.rxjs.buffer(bufferGate$),
-      // Here we map the buffered events into the length of the buffer
-      // If the user clicked once, the buffer is 1. If he clicked twice it is 2
-      window.rxjs.map(clicks => clicks.length),
-      window.rxjs.tap((clicks) => console.log(`clicks: ${clicks}`)),
-      window.rxjs.exhaustMap((clicks) => window.rxjs.interval(100).pipe(
-        window.rxjs.map((i) => [clicks, i]),
-        window.rxjs.withLatestFrom(lastPosX$.pipe(
-          window.rxjs.map((lpY => {
-            //console.log(`${lpY}`)
-            return lpY%MAX_1
-          }))
-        )),
-        window.rxjs.takeWhile(([[clicks, i], lpY]) => {
-          //console.info(`ia-1 ${lpY !== 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
-          return lpY !== 0
-        }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
-        window.rxjs.take(5)
-      ))
-    ).subscribe(([[clicks, i], lPosY]) => {
-      if(clicks === 1){
-        let pos = lPosY+MIN_1*i
-        console.warn(`Double click`)
-        el.style.backgroundPositionX = `-${pos}px`
-        if(i === 4){
-          i2.classList.remove("fa-minus")
-          i2.classList.add("fa-check")
-          console.info(`updating lastPosY$ with ${pos}`)
-          lastPosX$.next(pos)
-        }
-      }
-    });
-
-    const THRESHOLD = 10
-    let animatePinch$ = new window.rxjs.Subject()
-    let passThreshold$ = new window.rxjs.Subject()
-    let startInterval$ = new window.rxjs.Subject()
-    // window.rxjs.zip(
-    //   window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
-    //     window.rxjs.take(1),
-    //     window.rxjs.tap(() => console.log(`touchStart #1`))
-    //   ),
-    //   window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for second touch: fire only if touches are more than 1
-    //     window.rxjs.filter(ev => ev.touches.length > 1),
-    //     window.rxjs.tap(() => console.log(`touchStart #2`)),
-    //     window.rxjs.take(1)
-    //   )
-    // ).pipe(
-    //   window.rxjs.mergeMap(([start1, start2]) => {
-    //     console.log(start1)
-    //     console.log(start2)
-    //     let startDist = Math.hypot(start1.changedTouches[0].clientX - start2.changedTouches[0].clientX, start1.changedTouches[0].clientY-start2.changedTouches[0].clientY)
-    //     console.log(`distance between s1,s2 = ${startDist}`)
-
-    //     console.log(`touchDown`)
-    //     return window.rxjs.fromEvent(el, 'touchmove').pipe(
-    //       //window.rxjs.tap(mm => console.log(mm)),
-    //       window.rxjs.filter(mm => mm.touches.length > 1),
-    //       window.rxjs.map(mm => {
-    //         console.log(mm.touches.length)
-    //         let currentDist = Math.hypot(mm.touches[0].clientX-mm.touches[1].clientX, mm.touches[0].clientY-mm.touches[1].clientY)
-
-    //         return {
-    //           distance: {
-    //             current: currentDist,
-    //             start: startDist,
-    //           },
-    //           touches: mm.touches,
-    //         }
-    //       }),
-    //       window.rxjs.tap(mm => {
-    //         if(mm.distance.current < mm.distance.start){
-    //           console.warn(`Pinch IN`)
-    //           let mid = {
-    //             x: (mm.touches[0].clientX+mm.touches[1].clientX)/2,
-    //             y: (mm.touches[0].clientY+mm.touches[1].clientY)/2
-    //           }
-        
-    //           var rect = ia1.getBoundingClientRect();
-    //           var r = Math.abs(rect.top-rect.bottom)/2
-    //           var cx = rect.left + Math.abs(rect.left-rect.right)/2
-    //           var cy = rect.top + r
-    //           //console.log(`rect: t=${rect.top}, l=${rect.left}, b=${rect.bottom}, r=${rect.right}`)
-    //           //console.log(`cx: ${cx}, cy: ${cy}, r: ${r}`)
-        
-    //           var dist = (mid.x - cx) * (mid.x - cx) + (mid.y - cy) * (mid.y - cy)
-    //           /*if(dist < r*r){
-    //             console.warn(`end is within circle`)
-    //           }else{
-    //             console.log(`end is outside circle`)
-    //           }*/
-              
-    //         }else{
-    //           console.info(`Pinch OUT`)
-    //         }
-
-    //         animatePinch$.next({
-    //           pinch: mm.distance.current < mm.distance.start ? 'in' : 'out',
-    //           target: dist < r*r
-    //         })
-    //       }),
-    //       window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe(
-    //         window.rxjs.filter(end => end.touches.length < 2),  //stop when there are less than two fingers touching the screen
-    //         window.rxjs.tap(() => console.info(`touchEnd`)),
-    //         window.rxjs.tap(() => passThreshold$.next())
-    //       )),
-    //     )
-    //   }),
-    //   window.rxjs.repeat()  //restart from zip after processing this multi-touch
-    // ).subscribe()
 
     /** Observes the elapsed time between a `touchstart` and `touchend` events */
     let elapsed$ = new window.rxjs.ReplaySubject(1)
     let touch$ = new window.rxjs.ReplaySubject(1)
     //listen for fling event
-    window.rxjs.fromEvent(el, 'touchstart').pipe(
+    window.rxjs.fromEvent(ia1, 'touchstart').pipe(
       window.rxjs.tap(() => {
         //console.log(`Fling start`)
         elapsed$.next(null) //at touchstart reset the elapsed time
@@ -265,7 +121,7 @@ Promise.all(
       })
     ).subscribe()
 
-    elapsed$.pipe(
+    let fling$ = elapsed$.pipe(
       window.rxjs.filter((elapsed) => { //check whether the gesture is a fling or a drag: a fling is a very quick gesture (less than 150ms)
         return elapsed !== null && elapsed < 150
       }),
@@ -277,85 +133,34 @@ Promise.all(
         window.rxjs.filter((vals) => vals.distance > 10),
         window.rxjs.tap(() => console.warn(`Fling`))
       )),
-    ).subscribe()
-
-    /*let drag$ = window.rxjs.fromEvent(el, 'touchstart').pipe(
-      window.rxjs.debounceTime(100),
-      window.rxjs.exhaustMap(() => window.rxjs.fromEvent(el, 'touchmove').pipe(
-        window.rxjs.tap(() => console.log(`dragging`)),
-        window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend'))
-      ))
     )
 
-    window.rxjs.race(
-      fling$,
-      drag$
-    ).subscribe()*/
-
-    // window.rxjs.fromEvent(el, 'touchstart').pipe( //listen for first touch down
-    //   window.rxjs.tap(() => console.log(`start`)),
-    //   //window.rxjs.take(1),
-    //   window.rxjs.switchMap((start) => window.rxjs.merge(
-    //     window.rxjs.fromEvent(el, 'touchmove').pipe(
-    //       window.rxjs.map((tm) => tm.type),
-    //       window.rxjs.tap(e => console.log(e)),
-    //     ),
-    //     window.rxjs.race(
-    //       window.rxjs.fromEvent(el, 'touchend'),
-    //       window.rxjs.fromEvent(el, 'touchcancel')
-    //     ).pipe(
-    //       window.rxjs.map((te) => te.type),
-    //       window.rxjs.tap(e => console.log(e))
-    //     )
-    //   ).pipe(
-    //     window.rxjs.bufferTime(100),
-    //     window.rxjs.takeWhile(b => b.length > 0),
-    //     window.rxjs.tap(e => console.log(e))
-    //   )),
-    //   window.rxjs.tap(() => console.log(`done with switchMap`)),
-    //   /*window.rxjs.takeUntil(
-    //     window.rxjs.race(
-    //       window.rxjs.fromEvent(el, 'touchend'),
-    //       window.rxjs.fromEvent(el, 'touchcancel')
-    //     )
-    //   ),*/
-    //   window.rxjs.repeat(),
-    // ).subscribe()
-
-    
-
-
-    passThreshold$.asObservable().pipe(
-      window.rxjs.tap((v) => console.log(v)),
-      window.rxjs.takeWhile(v => v !== null, false),
-      window.rxjs.tap(v => console.log(v)),
-      window.rxjs.timeInterval(),
-      //window.rxjs.take(2),
-      window.rxjs.repeat(),
-      //window.rxjs.skip(1),//((swipe) => swipe.interval < 100),
-      window.rxjs.scan((acc, curr) => {
-        //console.log(acc)
-        //console.log(curr)
-
-        return Object.assign({}, { value: curr.value, interval: (acc.interval ?? 0) + curr.interval })
-      }),
-    ).subscribe({
-      next: t => console.log(t),
-      complete: () => console.warn(`pass completed`) 
-    })
-  
-    /*passThreshold$.pipe(
-      
-    ).subscribe(([[_, i], lPosY]) => {
+    fling$.pipe(
+      window.rxjs.exhaustMap((fling) => window.rxjs.interval(100).pipe(
+        window.rxjs.map((i) => [fling, i]),
+        window.rxjs.withLatestFrom(lastPosX$.pipe(
+          window.rxjs.map((lpY => {
+            console.log(`${lpY}`)
+            return lpY//%MAX_1
+          }))
+        )),
+        window.rxjs.takeWhile(([[clicks, i], lpY]) => {
+          //console.info(`ia-1 ${lpY !== 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
+          return lpY !== 0
+        }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
+        window.rxjs.take(5)
+      ))
+    ).subscribe(([[fling, i], lPosY]) => {
+      console.log(`animating: ${i}`)
       let pos = lPosY-MIN_1*i
 
       el.style.backgroundPositionX = `-${pos}px`
       if(i === 4){
-        i3.classList.remove("fa-minus")
-        i3.classList.add("fa-check")
+        i2.classList.remove("fa-minus")
+        i2.classList.add("fa-check")
         console.info(`updating lastPosY$ with ${pos}`)
         lastPosX$.next(pos)
       }
-    })*/
+    })
   }
 })
