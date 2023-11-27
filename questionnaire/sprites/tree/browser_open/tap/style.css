@@ -1,0 +1,43 @@
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+/*#anim {
+	background-image: url('heatmap_sprites.svg');
+	width: 922px;
+	height: 250px;
+}*/
+
+#anim {
+	position: relative;
+	background-image: url('sprites.jpg');
+	width: 233.8px;
+	height: 413px;
+	/*background-position-x: 435px;*/
+}
+
+#ia-1 {
+	position: absolute;
+	top: 97px;
+	left: 10px;
+	width: 42px;
+	height: 257px;
+	content: '';
+	border: 1px dashed blueviolet;
+	opacity: .5;
+}
+
+#ia-2 {
+	position: absolute;
+	top: 144px;
+	left: 36px;
+	width: 127px;
+	height: 43px;
+	content: '';
+	border: 1px dashed red;
+}
+
+@keyframes anim {
+	0% { background-position-y: 0px;}
+	40%, 100% { background-position-y: -1706.4px;}
+}
