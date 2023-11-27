@@ -32,13 +32,18 @@ Promise.all(
   let script = document.createElement('script')
   script.setAttribute('src', 'https://unpkg.com/rxjs@7.5.5/dist/bundles/rxjs.umd.js')
   script.setAttribute('id', "rxscript")
-  document.body.appendChild(script) 
+  document.body.appendChild(script)
+
+  const overlayElements = document.querySelectorAll('.loading-overlay');
 
   // now wait for it to load...
   script.onload = () => {
     // script has loaded, you can now use it safely
     console.warn('thank me later')
     // ... do something with the newly loaded script
+    overlayElements.forEach(element => {  //hide the overlay
+      element.style.display = 'none';
+    });
     
     /*const source = window.rxjs.interval(1000);
     //sample last emitted value from source every 2s
