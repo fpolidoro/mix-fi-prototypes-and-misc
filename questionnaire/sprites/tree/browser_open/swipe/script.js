@@ -42,11 +42,16 @@ Promise.all(
   script.setAttribute('id', "rxscript")
   document.body.appendChild(script) 
 
+  const overlayElements = document.querySelectorAll('.loading-overlay');
+
   // now wait for it to load...
   script.onload = () => {
     // script has loaded, you can now use it safely
     console.warn('thank me later')
     // ... do something with the newly loaded script
+    overlayElements.forEach(element => {  //hide the overlay
+      element.style.display = 'none';
+    });
     
     /*const source = window.rxjs.interval(1000);
     //sample last emitted value from source every 2s
@@ -75,10 +80,13 @@ Promise.all(
       let pos = lPosY+MIN_1*i
       console.log(`animating IA-2: ${i}, ${pos}`)
       el.style.backgroundPositionX = `-${pos}px`
-      if(i === 4){
+      if(i === 1){  //hide interactive area
+        ia2.style.display = "none"
+      }else if(i === 4){
         console.info(`updating lastPosY$ with ${pos}`)
         i1.classList.remove("fa-minus")
         i1.classList.add("fa-check")
+        ia1.style.display = "block" //display next interactive area
         lastPosX$.next(pos)
       }
     })
@@ -155,10 +163,13 @@ Promise.all(
       let pos = lPosY-MIN_1*i
 
       el.style.backgroundPositionX = `-${pos}px`
-      if(i === 4){
+      if(i === 1){  //hide interactive area
+        ia1.style.display = "none"
+      }else if(i === 4){
         i2.classList.remove("fa-minus")
         i2.classList.add("fa-check")
         console.info(`updating lastPosY$ with ${pos}`)
+        ia2.style.display = "block" //display next interactive area
         lastPosX$.next(pos)
       }
     })
