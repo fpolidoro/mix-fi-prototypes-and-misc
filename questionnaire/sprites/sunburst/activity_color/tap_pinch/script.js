@@ -1,8 +1,8 @@
 var modules = [
   //`https://cdnjs.cloudflare.com/ajax/libs/d3/7.6.1/d3.min.js`,
-  //`https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js`
-  `../../../../libs/d3.v6.js`,
-  `../../../../libs/jquery-3.6.0-min.js`,
+  `https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js`
+  // `../../../../libs/d3.v6.js`,
+  // `../../../../libs/jquery-3.6.0-min.js`,
   //`https://npmcdn.com/@reactivex/rxjs@5.0.0-beta.6/dist/global/Rx.umd.js`
 ]
 
@@ -30,23 +30,21 @@ Promise.all(
   const i2 = document.getElementById("i2")
   const i3 = document.getElementById("i3")
 
-  d3.select("#reset").on("click", () => {
-    el.style.backgroundPositionX = '0px'
-    el.style.backgroundPositionY = `0px`
-    ia1.style.pointerEvents = 'unset'
-    setTimeout(() => { el.style.animation = "" }, 1500)
-  })
-
   let script = document.createElement('script')
   script.setAttribute('src', 'https://unpkg.com/rxjs@7.5.5/dist/bundles/rxjs.umd.js')
   script.setAttribute('id', "rxscript")
   document.body.appendChild(script) 
+
+  const overlayElements = document.querySelectorAll('.loading-overlay');
 
   // now wait for it to load...
   script.onload = () => {
     // script has loaded, you can now use it safely
     console.warn('thank me later')
     // ... do something with the newly loaded script
+    overlayElements.forEach(element => {  //hide the overlay
+      element.style.display = 'none';
+    });
     
     /*const source = window.rxjs.interval(1000);
     //sample last emitted value from source every 2s
@@ -74,10 +72,13 @@ Promise.all(
     ).subscribe(([i, lPosY]) => {
       console.log(`animating IA-2: ${i}, ${lPosY+MIN_1*i}`)
       el.style.backgroundPositionY = `-${lPosY+MIN_1*i}px`
-      if(i === 4){
+      if(i === 1){  //hide interactive area
+        ia2.style.display = "none"
+      }else if(i === 4){
         console.info(`updating lastPosY$ with ${(lPosY+MIN_1*i)%MAX_1}`)
         i1.classList.remove("fa-minus")
         i1.classList.add("fa-check")
+        ia1.style.display = "block" //display next interactive area
         lastPosY$.next((lPosY+MIN_1*i)%MAX_1)
       }
     })
@@ -140,9 +141,16 @@ Promise.all(
         let pos = lPosY+MIN_1*i
         console.warn(`Double click`)
         el.style.backgroundPositionY = `-${pos}px`
+        
         if(i === 4){
           i2.classList.remove("fa-minus")
           i2.classList.add("fa-check")
+
+          if(pos === MAX_1){  //display/hide the interactive areas: we have just reached the root
+            ia1.style.display = "none"
+            ia2.style.display = "block"
+          }
+
           console.info(`updating lastPosY$ with ${pos}`)
           lastPosY$.next(pos)
         }
@@ -246,10 +254,13 @@ Promise.all(
       let pos = lPosY-MIN_1*i
 
       el.style.backgroundPositionY = `-${pos}px`
-      if(i === 4){
+      if(i === 1){  //hide interactive area
+        ia1.style.display = "none"
+      }else if(i === 4){
         i3.classList.remove("fa-minus")
         i3.classList.add("fa-check")
         console.info(`updating lastPosY$ with ${pos}`)
+        ia2.style.display = "block"
         lastPosY$.next(pos)
       }
     })
