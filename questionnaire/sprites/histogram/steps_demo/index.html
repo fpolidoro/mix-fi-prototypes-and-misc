@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            #anim {
+                background-image: url('sprites.png');
+                width: 582px;
+                height: 165.2px;
+                background-size: 582px 826px;
+                background-repeat: no-repeat;
+                overflow: hidden;
+                background-position-y: -165.2px;
+            }
+        
+            .animate {
+                animation: anim 4.5s steps(4) infinite;
+            }
+        
+            @keyframes anim {
+        
+                0%,
+                10% {
+                    background-position-y: 0px;
+                }
+        
+                20%,
+                100% {
+                    background-position-y: -660.8px;
+                }
+            }
+        
+            button {
+                border: 0;
+                padding: 8px;
+                font-size: 14px;
+                border-radius: 4px;
+                background-color: #607d8b;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="width: 100%; overflow: auto; padding-bottom: 16px;">
+            <div id="anim" style="background-size: 582px 826px;"></div>
+        </div>
+        <button id="play" onclick="document.getElementById('anim').classList.add('animate')">Play</button>
+        <button id="stop" onclick="document.getElementById('anim').classList.remove('animate')" style="margin-left: 8px">Reset</button>
+    </body>
+</html>
