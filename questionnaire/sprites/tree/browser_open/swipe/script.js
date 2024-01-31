@@ -105,6 +105,7 @@ Promise.all(
         let startDate = new Date()  //take the current time
         //console.log(`Fling exhaust`)
         return window.rxjs.fromEvent(el, 'touchmove').pipe( //and switch to listen for touchmove events
+          window.rxjs.tap((event) => event.preventDefault()),
           window.rxjs.takeUntil(window.rxjs.fromEvent(el, 'touchend').pipe( //until a touchend is detected
             //window.rxjs.tap(() => console.log(`Fling end`)),
             window.rxjs.tap((end) => {
