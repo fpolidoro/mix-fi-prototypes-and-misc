@@ -34,6 +34,10 @@
     border-left: 24px solid white;
 }
 
+#stop {
+    opacity: .3;
+}
+
 #stop > div::before {
     content: '';
     position: absolute;
@@ -49,8 +53,13 @@
     border-right: 8px solid white;
 }
 
+.hide {
+    display: none;
+    pointer-events: none;
+}
+
 .animate {
-    animation: anim 4.5s steps(4) infinite;
+    animation: anim 4.5s steps(4) 1;
 }
 
 @keyframes anim {
