@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <head>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    </head>
+    <body>
+        <div style="width: 100%; overflow: auto; padding-bottom: 16px;">
+            <div id="anim" style="background-size: 1169px 826px;">
+                <div id="play">
+                    <div></div>
+                </div>
+                <div id="stop" style="display: none;">
+                    <div></div>
+                </div>
+            </div>
+        </div>
+        <button id="play" onclick="document.getElementById('anim').classList.add('animate')">Play</button>
+        <button id="stop" onclick="document.getElementById('anim').classList.remove('animate')" style="margin-left: 8px">Reset</button>
+        
+        <script src="script.js"></script>
+    </body>
+</html>
