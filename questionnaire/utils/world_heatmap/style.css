@@ -10,7 +10,7 @@ body {
   }
   
   #content .map path {
-    fill: transparent;
+    fill: #ddd;
     stroke: black;
   }
   

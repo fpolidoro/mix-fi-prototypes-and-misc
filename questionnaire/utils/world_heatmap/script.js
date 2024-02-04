@@ -2,7 +2,14 @@ let projection = /*d3.geoMercator()
 	 .scale(150)
 	 .translate([480, 320])*/
 	// .center([0, 0]);
-    d3.geoEquirectangular();
+    d3
+    // .geoProjection(function(x, y) { return [x, y];})
+    //     .precision(0).scale(100).translate([0, 0]);
+        .geoTransform({
+            point: function(x, y) {
+                this.stream.point(360+x * 2, 180-y  * 2);
+            }
+        })
 
 let geoGenerator = d3.geoPath()
 	.projection(projection);
