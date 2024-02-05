@@ -14,8 +14,10 @@ let geoGenerator = d3.geoPath()
  * occurring on the svg
  * @param d The path element to highlight. This corresponds to the country whose centroid is the nearest to
  * the pointer, if such country exists; undefined otherwise. Antarctica is not considered as a valid country
+ * @param bubble Defines the caller of this function: if true, the event has been propagated by the svg
+ * element, therefore the pointer center can use a lighter blue
  */
-function handleSelection(e, d) {
+function handleSelection(e, d, bubble = false) {
 	d3.select('#content g.map')
 		.selectAll('path').attr('fill', '#ededed')
 	if(d !== undefined && d.properties.name !== 'Antarctica'){
@@ -33,26 +35,29 @@ function handleSelection(e, d) {
 			.attr('width', bounds[1][0] - bounds[0][0])
 			.attr('height', bounds[1][1] - bounds[0][1]);*/
 
-		d3.select('#content .centroid')
-			.style('display', 'inline')
-			.attr('transform', 'translate(' + centroid + ')');
+		// d3.select('#content .centroid')
+		// 	.style('display', 'inline')
+		// 	.attr('transform', 'translate(' + centroid + ')');
 
 		d3.select(`#${d.properties.ADM0_ISO}`).attr('fill', '#0dcaf0')
+		d3.select('#content .poi')	//draw pointer
+			.style('display', 'inline')
+			.style('fill', bubble ? '#0dcaf0' : '#0a58ca')	//fill the circle with gray if selection is invalid
+			.attr('transform', `translate(${e.clientX-5}, ${e.clientY - 25})`);
 		console.log(`${d.properties.name}`)
 	}else{	//selection is invalid, because there is no nearby country
 		d3.select('#content .info').text(`Invalid selection`)
-		d3.select('#content .bounding-box rect')	//make the bounding rect invisible
-			.attr('x', 0)
-			.attr('y', 0)
-			.attr('width', 0)
-			.attr('height', 0);
-		d3.select('#content .centroid').style('display', 'none')	//hide the centroid
+		// d3.select('#content .bounding-box rect')	//make the bounding rect invisible
+		// 	.attr('x', 0)
+		// 	.attr('y', 0)
+		// 	.attr('width', 0)
+		// 	.attr('height', 0);
+		//d3.select('#content .centroid').style('display', 'none')	//hide the centroid
+		d3.select('#content .poi')	//draw pointer
+			.style('display', 'inline')
+			.style('fill', d !== undefined && d.properties.name === 'Antarctica' ? '#a9a9a9' : '#ddd')	//fill the circle with gray if selection is invalid
+			.attr('transform', `translate(${e.clientX-5}, ${e.clientY - 25})`);
 	}
-
-	d3.select('#content .poi')	//draw pointer
-		.style('display', 'inline')
-		.style('fill', d === undefined || d.properties.name === 'Antarctica' ? '#ddd' : '#0dcaf0')	//fill the circle with gray if selection is invalid
-		.attr('transform', `translate(${e.clientX-5}, ${e.clientY - 25})`);
 	e.stopPropagation();	//prevent the event from bubbling up to the parent (SVG) to avoid recursive calls to this method
 }
 
@@ -105,7 +110,7 @@ function update(geojson) {
 		if(intersects.size > 0){
 			console.log(`Closest country is: ${minCountry}, distance: ${minDistance}`)
 		}
-		handleSelection(e, minD)	//fire click function to draw the cues on the map
+		handleSelection(e, minD, true)	//fire click function to draw the cues on the map
 	})
 }
 
