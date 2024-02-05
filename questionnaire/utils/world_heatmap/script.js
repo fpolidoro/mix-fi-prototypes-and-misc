@@ -16,6 +16,8 @@ let geoGenerator = d3.geoPath()
  * the pointer, if such country exists; undefined otherwise. Antarctica is not considered as a valid country
  */
 function handleSelection(e, d) {
+	d3.select('#content g.map')
+		.selectAll('path').attr('fill', '#ededed')
 	if(d !== undefined && d.properties.name !== 'Antarctica'){
 		let pixelArea = geoGenerator.area(d);
 		let bounds = geoGenerator.bounds(d);
@@ -25,15 +27,17 @@ function handleSelection(e, d) {
 		d3.select('#content .info')
 			.text(d.properties.name + ' (path.area = ' + pixelArea.toFixed(1) + ' path.measure = ' + measure.toFixed(1) + ')');
 
-		d3.select('#content .bounding-box rect')
+		/*d3.select('#content .bounding-box rect')
 			.attr('x', bounds[0][0])
 			.attr('y', bounds[0][1])
 			.attr('width', bounds[1][0] - bounds[0][0])
-			.attr('height', bounds[1][1] - bounds[0][1]);
+			.attr('height', bounds[1][1] - bounds[0][1]);*/
 
 		d3.select('#content .centroid')
 			.style('display', 'inline')
 			.attr('transform', 'translate(' + centroid + ')');
+
+		d3.select(`#${d.properties.ADM0_ISO}`).attr('fill', '#0dcaf0')
 		console.log(`${d.properties.name}`)
 	}else{	//selection is invalid, because there is no nearby country
 		d3.select('#content .info').text(`Invalid selection`)
@@ -60,6 +64,8 @@ function update(geojson) {
 	u.enter()
 		.append('path')
 		.attr('d', geoGenerator)
+		.attr('fill', '#ddd')
+		.attr('id', d => d.properties.ADM0_ISO)
 		.on('click', handleSelection)
 		.each(function(d) {	//prepare the map for storing the path of each country, which will be used by the click handlers to validate the user's input
 			if(d.properties.name !== 'Antarctica'){
