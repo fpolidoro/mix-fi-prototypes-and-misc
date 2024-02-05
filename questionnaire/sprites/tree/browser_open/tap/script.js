@@ -66,7 +66,7 @@ Promise.all(
           console.info(`ia-2 ${lpY === 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
           return lpY === 0
         }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
-        window.rxjs.take(5)
+        //window.rxjs.take(5)
       ))
     ).subscribe(([i, lPosY]) => {
       console.log(`animating IA-2: ${i}, ${lPosY+MIN_1*i}`)
@@ -95,7 +95,7 @@ Promise.all(
           console.info(`ia-2 ${lpY === 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
           return lpY !== 0
         }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
-        window.rxjs.take(5)
+        //window.rxjs.take(5)
       ))
     ).subscribe(([i, lPosY]) => {
       console.log(`animating IA-2: ${i}, ${lPosY-MIN_1*i}`)

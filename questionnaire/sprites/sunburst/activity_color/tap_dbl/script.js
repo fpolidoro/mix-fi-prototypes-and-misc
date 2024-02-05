@@ -128,15 +128,15 @@ Promise.all(
         window.rxjs.map((i) => [clicks, i]),
         window.rxjs.withLatestFrom(lastPosY$.pipe(
           window.rxjs.map((lpY => {
-            //console.log(`${lpY}`)
+            console.log(`lpy%MAX_1: ${lpY}%${MAX_1}=${lpY%MAX_1}`)
             return lpY%MAX_1
           }))
         )),
         window.rxjs.takeWhile(([[clicks, i], lpY]) => {
-          //console.info(`ia-1 ${lpY !== 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
+          console.info(`ia-1 ${lpY !== 0 ? 'enabled' : 'disabled'} because lpY=${lpY}`)
           return lpY !== 0
         }),//disable this interactive area when we are at the very beginning or at the very end of the spritesheet (i.e. we are on frame 0)
-        window.rxjs.take(5)
+        //window.rxjs.take(5)
       ))
     ).subscribe(([[clicks, i], lPosY]) => {
       let pos
