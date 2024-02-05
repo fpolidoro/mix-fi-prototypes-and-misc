@@ -1,0 +1,46 @@
+
+body {
+    font-family: "Helvetica Neue", Helvetica, sans-serif;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  #content .info {
+    height: 20px;
+  }
+  
+  #content .map path {
+    fill: #ddd;
+    stroke: black;
+  }
+  
+  #content .bounding-box rect {
+    fill: none;
+    stroke: #333;
+    stroke-dasharray: 2,1;
+    pointer-events: none;
+  }
+  
+  #content .centroid {
+    display: none;
+    pointer-events: none;
+  }
+  
+  #content .centroid circle {
+    fill: red;
+  }
+
+  #content .poi {
+    display: none;
+    pointer-events: none;
+  }
+
+  #content .poi circle {
+    pointer-events: none;
+  }
+
+  #content .poi circle:nth-child(2) {
+    opacity: .3;
+  }
+  
+  

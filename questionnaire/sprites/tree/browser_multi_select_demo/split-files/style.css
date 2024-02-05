@@ -1,0 +1,85 @@
+#anim {
+    position: relative;
+    background-image: url('sprites.jpg');
+    width: 233.8px;
+    height: 413px;
+    background-size: 1169px 826px;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    background-position-y: -413px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#play,
+#stop {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: deepskyblue;
+    opacity: .5;
+}
+
+#play > div::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 51.5%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-bottom: 16px solid transparent;
+    border-left: 24px solid white;
+}
+
+#stop {
+    opacity: .3;
+}
+
+#stop > div::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /*width: 24px;
+    height: 24px;
+    background-color: white;*/ /*This is for the stop square*/
+    width: 8px;
+    height: 24px;
+    border-left: 8px solid white;
+    border-right: 8px solid white;
+}
+
+.hide {
+    display: none;
+    pointer-events: none;
+}
+
+.animate {
+    animation: anim 4.5s steps(4) 1;
+}
+
+@keyframes anim {
+
+    0%,
+    10% {
+        background-position-x: 0px;
+    }
+
+    20%,
+    100% {
+        background-position-x: -935.2px;
+    }
+}
+
+button {
+    border: 0;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 4px;
+    background-color: #607d8b;
+    color: white;
+}
