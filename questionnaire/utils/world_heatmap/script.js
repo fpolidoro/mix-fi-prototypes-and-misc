@@ -1,6 +1,8 @@
+const offset = {x: 5, y: 5}	//offset of the svg element from the top-left corner of the window
+const pointerHalo = 48	//radius of the pointer's halo
 let projection = d3.geoTransform({
 		point: function(x, y) {
-			this.stream.point(360+x * 2, 180-y  * 2);
+			this.stream.point(540+x*3, 260-y*3);
 		}
 	})
 
@@ -43,7 +45,7 @@ function handleSelection(e, d, bubble = false) {
 		d3.select('#content .poi')	//draw pointer
 			.style('display', 'inline')
 			.style('fill', bubble ? '#0dcaf0' : '#0a58ca')	//fill the circle with gray if selection is invalid
-			.attr('transform', `translate(${e.clientX-5}, ${e.clientY - 25})`);
+			.attr('transform', `translate(${e.clientX-offset.x}, ${e.clientY-offset.y})`);
 		console.log(`${d.properties.name}`)
 	}else{	//selection is invalid, because there is no nearby country
 		d3.select('#content .info').text(`Invalid selection`)
@@ -56,7 +58,7 @@ function handleSelection(e, d, bubble = false) {
 		d3.select('#content .poi')	//draw pointer
 			.style('display', 'inline')
 			.style('fill', d !== undefined && d.properties.name === 'Antarctica' ? '#a9a9a9' : '#ddd')	//fill the circle with gray if selection is invalid
-			.attr('transform', `translate(${e.clientX-5}, ${e.clientY - 25})`);
+			.attr('transform', `translate(${e.clientX-offset.x}, ${e.clientY-offset.y})`);
 	}
 	e.stopPropagation();	//prevent the event from bubbling up to the parent (SVG) to avoid recursive calls to this method
 }
@@ -69,7 +71,7 @@ function update(geojson) {
 	u.enter()
 		.append('path')
 		.attr('d', geoGenerator)
-		.attr('fill', '#ddd')
+		.attr('fill', '#ededed')
 		.attr('id', d => d.properties.ADM0_ISO)
 		.on('click', handleSelection)
 		.each(function(d) {	//prepare the map for storing the path of each country, which will be used by the click handlers to validate the user's input
@@ -86,12 +88,12 @@ function update(geojson) {
 		minDistance = Infinity
 		minCountry = undefined
 		minD = undefined
-		const pointer = [e.clientX-5, e.clientY-25];	//pointer (mouse or finger)
+		const pointer = [e.clientX-offset.x, e.clientY-offset.y];	//pointer (mouse or finger)
 		countryPaths.forEach((b, name) => {	//for each path representing a country...
 			const [x1, y1] = b.bounds[0];
 			const [x2, y2] = b.bounds[1];
 			//...check whether pointer (including its halo) intersects their bounding box
-			if (pointer[0]+32 >= x1 && pointer[0]-32 <= x2 && pointer[1]+32 >= y1 && pointer[1]-32 <= y2) {
+			if (pointer[0]+pointerHalo >= x1 && pointer[0]-pointerHalo <= x2 && pointer[1]+pointerHalo >= y1 && pointer[1]-pointerHalo <= y2) {
 				console.log(`Pointer intersects with ${name}`);
 				intersects.set(name, b)	//the pointer intersects the box, so store the box in a map
 			}
