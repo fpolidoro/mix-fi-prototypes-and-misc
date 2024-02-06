@@ -5,11 +5,20 @@
         <meta charset="utf-8">
         <title>World</title>
         <link rel="stylesheet" href="style.css">
+        <script
+            src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
     </head>
-
     <body>
+        <div id="header">
+            <h1>World Heatmap</h1>
+        </div>
+        <span>Ciao</span>
         <div id="content">
-            <svg width="1084px" height="524px">
+            <h2 class="title">World</h2>
+            <div class="info">Hover over a country</div>
+            <svg id="world" width="1084px" height="524px">
                 <g class="map"></g>
                 <g class="bounding-box"><rect></rect></g>
                 <g class="centroid"><circle r="4"></circle></g>
@@ -18,13 +27,9 @@
                     <circle r="32"></circle>
                 </g>
             </svg>
-            <div class="info">Hover over a country</div>
         </div>
         <script src="https://unpkg.com/rxjs@7.5.5/dist/bundles/rxjs.umd.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.2.0/d3.min.js"></script>
         <script src="script.js"></script>
     </body>
 </html>
-    
-    
-    

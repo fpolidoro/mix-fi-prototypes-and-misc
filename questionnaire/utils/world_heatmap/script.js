@@ -1,8 +1,19 @@
-const offset = {x: 5, y: 5}	//offset of the svg element from the top-left corner of the window
+const svgRect = $('#world').offset();
+const parentPadding = {x: $('#world').parent().innerWidth()-$('#world').parent().width(), y: $('#world').parent().innerHeight()-$('#world').parent().innerHeight()}
+console.log(`SVG rect: ${parentPadding.x}, ${parentPadding.y}`)
+const svgPrevSiblings = $('#world').prevAll()
+// .each((index, element) => {
+// 	console.log($(element).text())
+// 	console.log(`Prev sibling: ${$(element).width()}, ${$(element).innerHeight()}`)
+// })
+.map((index, element) => ({ x: $(element).outerWidth(), y: $(element).outerHeight() })).get().reduce((a, b) => ({ x: a.x+b.x, y: a.y+b.y }), { x: 0, y: 0 });
+console.log(`SVG prev siblings: ${svgPrevSiblings.x}, ${svgPrevSiblings.y}`)
+console.log(`SVG rect: ${svgRect.left}, ${svgRect.top}`)
+const offset = {x: svgRect.left, y: svgRect.top}	//offset of the svg element from the top-left corner of the window
 const pointerHalo = 48	//radius of the pointer's halo
 let projection = d3.geoTransform({
 		point: function(x, y) {
-			this.stream.point(540+x*3, 260-y*3);
+			this.stream.point(svgRect.left+480+x*3, svgRect.top+svgPrevSiblings.y-y*3);
 		}
 	})
 
