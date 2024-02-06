@@ -1,11 +1,6 @@
 const offset = {x: 5, y: 5}	//offset of the svg element from the top-left corner of the window
 const pointerHalo = 48	//radius of the pointer's halo
-let projection = d3.geoTransform({
-		point: function(x, y) {
-			this.stream.point(540+x*3, 260-y*3);
-		}
-	})
-
+let projection = d3.geoEquirectangular()
 let geoGenerator = d3.geoPath()
 	.projection(projection);
 
