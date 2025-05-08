@@ -1,0 +1,5 @@
+This folder contains the prototypes generated from the sketches used during the exploratory test.
+
+The heatmap and the histogram leverage the D3.js library to implement the zoom gesture, as such this can be simulated with the mouse wheel on desktop PCs. We abandoned this library because sometimes it was problematic to load on certain platforms and, when exploring the implementation of multiple gestures (on the sunburst), it did not allow us to properly handle the touch-generated events in combination with other gestures.
+
+For the above reason, the sunburst and the space-filling tree leverage RxJS to handle touch events. While this strategy proved to be better in allowing us to handle multiple gestures, it forced us to implement gesture detection from scratch, hence the prototypes implementing pinch and swipe gestures can be run (and debugged) only on touch screen devices.
