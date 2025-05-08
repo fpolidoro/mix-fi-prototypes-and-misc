@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <head>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <style>
+        #anim {
+            background-image: url('https://i.ibb.co/BtGz0Bs/sprites.png');
+            width: 857px;
+            height: 244px;
+        }
+
+        .animate {
+            animation: anim 1.5s steps(4) infinite;
+        }
+
+        @keyframes anim {
+            0% { background-position-y: 0px;}
+            40%, 100% { background-position-y: -976px;}
+        }
+    </style>
+    <body>
+        <style>
+            #anim {
+                background-image: url('https://i.ibb.co/Twmg6L7/sprites-heatmap-bw.png');
+                width: 857px;
+                height: 244px;
+            }
+    
+            .animate {
+                animation: anim 4.5s steps(4) infinite;
+            }
+    
+            @keyframes anim {
+                0%, 10% { background-position-y: 0px;}
+                20%, 100% { background-position-y: -976px;}
+            }
+        </style>
+        <div style="width: 100%; overflow: auto;">
+            <div id="anim"></div>
+        </div>
+        <button id="play" onclick="document.getElementById('anim').classList.add('animate')">Play</button>
+        <button id="stop" onclick="document.getElementById('anim').classList.remove('animate')">Reset</button>
+    </body>
+</html>

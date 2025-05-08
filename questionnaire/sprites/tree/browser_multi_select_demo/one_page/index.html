@@ -1,0 +1,42 @@
+<style>
+    #anim {
+        background-image: url('https://survey.questionstar.com/uploads/cb54c7ebceeb4c933b802d3d230b7485.jpg');
+        width: 233.8px;
+        height: 413px;
+        background-size: 1169px 826px;
+        background-repeat: no-repeat;
+        overflow: hidden;
+        background-position-y: -413px;
+    }
+
+    .animate {
+        animation: anim 4.5s steps(4) infinite;
+    }
+
+    @keyframes anim {
+
+        0%,
+        10% {
+            background-position-x: 0px;
+        }
+
+        20%,
+        100% {
+            background-position-x: -935.2px;
+        }
+    }
+
+    button {
+        border: 0;
+        padding: 8px;
+        font-size: 14px;
+        border-radius: 4px;
+        background-color: #607d8b;
+        color: white;
+    }
+</style>
+<div style="width: 100%; overflow: auto; padding-bottom: 16px;">
+    <div id="anim" style="background-size: 1169px 826px;"></div>
+</div>
+<button id="play" onclick="document.getElementById('anim').classList.add('animate')">Play</button>
+<button id="stop" onclick="document.getElementById('anim').classList.remove('animate')" style="margin-left: 8px">Reset</button>

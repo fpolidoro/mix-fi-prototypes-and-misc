@@ -1,0 +1,68 @@
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+/*#anim {
+	background-image: url('heatmap_sprites.svg');
+	width: 922px;
+	height: 250px;
+}*/
+
+#container {
+	width: 100%;
+	overflow: auto;
+	position: relative;
+	overflow: hidden;
+	touch-action: none; /*see https://stackoverflow.com/a/49590237 */
+}
+
+#anim {
+	background-image: url('sprites.png');
+	background-position-x: 0px;
+	width: 582px;/*857px;*/
+	height: 165.2px;/*244px;*/
+	/*animation: anim 1s steps(4) infinite;*/
+	/*animation: anim 10s steps(16) infinite;*/
+}
+
+#ia-1 {
+	position: absolute;
+	top: 122px;
+	left: 54px;
+	width: 506px;
+	height: 40px;
+	content: '';
+	border: 2px dashed blueviolet;
+}
+
+#ia-2 {
+	position: absolute;
+	top: 60px;
+	left: 20px;
+	width: 100px;
+	height: 38px;
+	content: '';
+	/*background-color: aquamarine;
+	opacity: .5;*/
+	transform: rotate(-50deg);
+	border: 2px dashed aquamarine;
+}
+
+#ia-3 {
+	position: absolute;
+	top: 56px;
+	left: 73px;
+	width: 160px;
+	height: 160px;
+	content: '';
+	/*background-color: coral;
+	opacity: .5;*/
+	border-radius: 50%;
+	border: 2px dashed coral;
+}
+
+
+@keyframes anim {
+	0% { background-position-y: 0px;}
+	40%, 100% { background-position-y: -4352.4px;}
+}
